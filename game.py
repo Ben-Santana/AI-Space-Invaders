@@ -160,11 +160,10 @@ def handle_shooting(worldstate):
                 bullet = Bullet(worldstate.player.x + worldstate.player.width // 2, worldstate.player.y, -10)
                 worldstate.bullets.append(bullet)
 
-# def cheat_FF(worldstate):
-#     keys = pygame.key.get_pressed()
-#     if keys[pygame.K_SPACE]:
-        
-
+def cheat_FF(worldstate):
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_f]:        
+        worldstate.player.fastFire = True
 
 # Function to update bullets
 def update_bullets(worldstate):
@@ -337,6 +336,7 @@ def main():
         handle_player_movement(worldstate)
         handle_shooting(worldstate)
         update_bullets(worldstate)
+        cheat_FF(worldstate)
 
         if boss:
             update_boss(boss)
@@ -352,8 +352,12 @@ def main():
                 display_message(screen, f"Level {level} Complete! Next Level", duration=2)
                 level += 1
                 worldstate.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
-                for enemy in worldstate.enemies:
-                    enemy.speed += level
+                if(level <= 4):
+                    for enemy in worldstate.enemies:
+                        enemy.speed += level
+                else:
+                    for enemy in worldstate.enemies:
+                        enemy.speed += level / 2
 
         worldstate.player.draw(screen)
         if boss:
