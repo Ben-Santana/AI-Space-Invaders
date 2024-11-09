@@ -4,7 +4,7 @@ import copy
 import pygame
 import sys
 
-#from real_time.manage_functions import prepare_next_level
+from real_time.manage_functions import prepare_next_level
 
 # Initialize Pygame
 pygame.init()
