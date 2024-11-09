@@ -1,3 +1,7 @@
+from api_call import GPT
+
+gpt = GPT()
+
 def append_to_python_file(content: str):
     try:
         with open("dynamic.py", "a") as file:
@@ -7,3 +11,4 @@ def append_to_python_file(content: str):
 
     except Exception as e:
         print(f"An error occurred: {e}")
+
