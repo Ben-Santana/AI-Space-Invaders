@@ -1,6 +1,5 @@
 import pygame
 import sys
-import WorldState
 
 # Initialize Pygame
 pygame.init()
@@ -9,7 +8,7 @@ pygame.init()
 SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 500
 
-# Colors
+# ColorsS
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
