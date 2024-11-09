@@ -6,7 +6,7 @@ pygame.init()
 
 # Screen dimensions
 SCREEN_WIDTH = 600
-SCREEN_HEIGHT = 600
+SCREEN_HEIGHT = 800
 
 # Colors
 WHITE = (255, 255, 255)
@@ -77,7 +77,7 @@ def handle_shooting(worldstate):
     keys = pygame.key.get_pressed()
     if keys[pygame.K_SPACE]:
         # Limit to one bullet on screen
-        if (len(worldstate.bullets) < 4):
+        if not any(bullet.dy < 0 for bullet in worldstate.bullets):
             bullet = Bullet(worldstate.player.x + worldstate.player.width // 2, worldstate.player.y, -10)
             worldstate.bullets.append(bullet)
 
