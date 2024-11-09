@@ -4,7 +4,7 @@ import copy
 import pygame
 import sys
 
-from real_time.manage_functions import prepare_next_level
+#from real_time.manage_functions import prepare_next_level
 
 # Initialize Pygame
 pygame.init()
@@ -227,7 +227,7 @@ def handle_collisionsE(worldstate):
                 break
 
 def display_message(surface, text, duration=2):
-    font = pygame.font.SysFont(None, 48)
+    font = pygame.font.Font("nothing-font-5x7.ttf", 48)
     message = font.render(text, True, WHITE)
     text_rect = message.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
     
@@ -238,7 +238,7 @@ def display_message(surface, text, duration=2):
     pygame.time.delay(duration * 1000)
 
 def display_game_over(surface):
-    font = pygame.font.SysFont(None, 48)
+    font = pygame.font.Font("nothing-font-5x7.ttf", 48)
     game_over_text = font.render("Game Over!", True, WHITE)
     restart_text = font.render("Press SPACE to Restart", True, WHITE)
     
@@ -259,8 +259,13 @@ def display_game_over(surface):
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 waiting = False
 
-def update_boss(boss):
+def update_boss(boss, worldstate):
     boss.move()  # Move boss based on its behavior
+    if boss.y + boss.height >= worldstate.player.y:
+        worldstate.enemies.clear()  # Clear all enemies to stop the game
+        display_game_over(screen)
+        # Restart the game
+        worldstate.__init__()  # Reset the world state
 
 def handle_collisions_boss(worldstate, boss):
     for bullet in worldstate.bullets[:]:
@@ -274,7 +279,7 @@ def handle_collisions_boss(worldstate, boss):
             worldstate.bullets.remove(bullet)
 
 def display_menu(surface):
-    font = pygame.font.SysFont(None, 48)
+    font = pygame.font.Font("nothing-font-5x7.ttf", 48)
     menu_options = ["Start Game", "Quit "]
     selected_option = 0
 
@@ -371,7 +376,7 @@ def main():
 
         # Handle boss or enemies
         if boss:
-            update_boss(boss)
+            update_boss(boss, worldstate)
             handle_collisions_boss(worldstate, boss)
             if boss.health <= 0:  # Boss defeated
                 boss = None
