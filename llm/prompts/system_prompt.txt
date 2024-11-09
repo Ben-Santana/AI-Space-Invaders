@@ -60,7 +60,6 @@ You are an expert software engineer specializing in game development. Your task 
    - Avoid introducing new objects based on random number generators in a way that could cause gameplay issues.
    - If you instantiate new objects, ensure they stay within the screen boundaries.
    - You can modify the speed or size of the player, enemies, or bullets.
-   - You can add new enemy behaviors, such as shooting bullets back at the player.
    - You can introduce power-ups, obstacles, or other forces that affect gameplay.
    - Feel free to explore other variations to enhance the game experience.
 

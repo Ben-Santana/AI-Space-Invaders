@@ -1,6 +1,7 @@
 from api_call import GPT
 
-def generate_function(gpt: GPT):
+def generate_function():
+    gpt = GPT()
     user_prompt = open(f"./prompts/user_prompt.txt", "r").read() + open(f"../real-time/dynamic.py", "r").read()
     system_prompt = open(f"./prompts/system_prompt.txt", "r").read()
 
