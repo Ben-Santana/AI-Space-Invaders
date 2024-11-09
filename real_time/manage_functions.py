@@ -18,7 +18,7 @@ def add_function_for_level(level):
 
     # 4. Append the function code to dynamic.py
     try:
-        with open("dynamic.py", "a") as file:
+        with open("./real_time/dynamic.py", "a") as file:
             file.write("\n\n")  # Add spacing between functions for readability
             file.write(function_code)
         print(f"New function added for Level {level}.")
