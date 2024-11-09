@@ -160,10 +160,13 @@ def handle_shooting(worldstate):
                 bullet = Bullet(worldstate.player.x + worldstate.player.width // 2, worldstate.player.y, -10)
                 worldstate.bullets.append(bullet)
 
+# Gives Cheat 
 def cheat_FF(worldstate):
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_f]:        
+    if keys[pygame.K_f] and not worldstate.player.fastFire:        
         worldstate.player.fastFire = True
+    elif keys[pygame.K_f] and worldstate.player.fastFire:
+        worldstate.player.fastFire = False
 
 # Function to update bullets
 def update_bullets(worldstate):
@@ -266,11 +269,10 @@ def handle_collisions_boss(worldstate, boss):
         ):
             boss.health -= 1  # Decrease boss health
             worldstate.bullets.remove(bullet)
-            worldstate.score += 50  # Higher score for hitting boss
 
 def display_menu(surface):
     font = pygame.font.SysFont(None, 48)
-    menu_options = ["Start Game", "Quit"]
+    menu_options = ["Start Game", "Quit "]
     selected_option = 0
 
     while True:
@@ -328,8 +330,7 @@ def main():
 
         if boss_level and boss is None:  # Spawn the boss if it's a boss level
             boss = Boss(SCREEN_WIDTH // 2 - 60, 50)  # Center the boss at the top
-            base_health = boss.health
-            boss.health = base_health + bossCounter*2
+            boss.health = 30 + (level // 3) * 10
 
 
 
