@@ -1,337 +1,74 @@
-import math
-import random
-import pygame
-import sys
+import importlib
+from llm.api_call import GPT
 
-from manage_functions import prepare_next_level  # Import function to manage dynamic level changes
+def add_function_for_level(level):
+    """Requests a new function from GPT for a specific game level and appends it to dynamic.py."""
+    print(f"Requesting new function for Level {level}...")
+    
+    # 1. Construct the prompts based on the level and current game state
+    user_prompt = open("./prompts/user_prompt.txt", "r").read() + f"\nAdd a unique gameplay mechanic for Level {level}."
+    system_prompt = open("./prompts/system_prompt.txt", "r").read()
 
-# Initialize Pygame
-pygame.init()
+    # 2. Request the function from GPT
+    gpt = GPT()
+    response = gpt.text_completion(user_prompt=user_prompt, system_prompt=system_prompt)
 
-# Screen dimensions
-SCREEN_WIDTH = 600
-SCREEN_HEIGHT = 500
+    # 3. Clean and format the response to extract function code
+    function_code = remove_code_block_markers(response)
 
-# Colors
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GREEN = (0, 255, 0)
-RED = (255, 0, 0)
+    # 4. Append the function code to dynamic.py
+    try:
+        with open("dynamic.py", "a") as file:
+            file.write("\n\n")  # Add spacing between functions for readability
+            file.write(function_code)
+        print(f"New function added for Level {level}.")
+    except Exception as e:
+        print(f"Error adding function for Level {level}: {e}")
 
-# Set up the display
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Space Invaders")
+    # 5. Extract the summary for displaying in the game
+    summary = extract_summary(response)
+    return summary
 
-# Clock for controlling the frame rate
-clock = pygame.time.Clock()
+def load_dynamic_functions():
+    """Reloads dynamic.py and returns a dictionary of callable functions."""
+    try:
+        import dynamic  # Import dynamic.py initially
+        importlib.reload(dynamic)  # Reloads dynamic to access the latest functions
+        # Retrieve all callable functions in dynamic.py
+        functions = {name: getattr(dynamic, name) for name in dir(dynamic) if callable(getattr(dynamic, name))}
+        print("Functions successfully loaded from dynamic.py")
+        return functions
+    except Exception as e:
+        print(f"Error loading functions from dynamic.py: {e}")
+        return {}
 
-# Define the WorldState class
-class WorldState:
-    def __init__(self):
-        self.player = Player()
-        self.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
-        self.bullets = []
-        self.score = 0
+def prepare_next_level(level):
+    """Sets up and loads the new function for the next game level, including the summary."""
+    # Step 1: Request and add a new function for the level
+    summary = add_function_for_level(level)
 
-# Define the Player class
-class Player:
-    def __init__(self):
-        self.width = 50
-        self.height = 30
-        self.x = SCREEN_WIDTH // 2 - self.width // 2
-        self.y = SCREEN_HEIGHT - self.height - 10
-        self.speed = 8
-        self.fastFire = False
+    # Step 2: Load the functions from dynamic.py, including the newly added one
+    functions = load_dynamic_functions()
 
-    def draw(self, surface):
-        pygame.draw.rect(surface, GREEN, (self.x, self.y, self.width, self.height))
-        pygame.draw.rect(surface, GREEN, (self.x, self.y, 35, 40))
-        pygame.draw.rect(surface, GREEN, (self.x, self.y, 15, 100))
+    # Step 3: Return both the functions and the summary text for display
+    return functions, summary
 
-# Define the Boss Class
-class Boss:
-    def __init__(self, x, y):
-        self.width = 120
-        self.height = 90
-        self.x = x
-        self.y = y
-        self.health = 30  # More health than regular enemies
-        self.speed = 2
-        self.direction = 1  # 1 for right, -1 for left
+def remove_code_block_markers(text):
+    """Removes ```python and ``` markers from the given text."""
+    lines = text.split('\n')
+    cleaned_lines = [line for line in lines if line.strip() != '```python' and line.strip() != '```']
+    return '\n'.join(cleaned_lines)
 
-    def draw(self, surface):
-        pygame.draw.rect(surface, RED, (self.x, self.y, self.width, self.height))
-        # Eyes (small black squares)
-        eye_size = 30
-        pygame.draw.rect(surface, BLACK, (self.x + self.width // 4 - eye_size // 2, self.y + self.height // 4, eye_size, eye_size))
-        pygame.draw.rect(surface, BLACK, (self.x + 3 * self.width // 4 - eye_size // 2, self.y + self.height // 4, eye_size, eye_size))
-        # Mouth and health bar
-        mouth_width = 60
-        mouth_height = 20
-        mouth_x = self.x + self.width // 2 - mouth_width // 2
-        mouth_y = self.y + 3 * self.height // 4
-        pygame.draw.rect(surface, BLACK, (mouth_x, mouth_y, mouth_width, mouth_height))
-        health_ratio = self.health / 30
-        pygame.draw.rect(surface, GREEN, (self.x, self.y - 10, self.width * health_ratio, 5))
-
-    def move(self):
-        if self.x <= 0 or self.x + self.width >= SCREEN_WIDTH:
-            self.direction *= -1
-        self.x += self.speed * self.direction
-        if random.randint(1, 100) > 98:
-            self.y += 10
-
-# Define the Enemy class
-class Enemy:
-    def __init__(self, x, y):
-        self.width = 40
-        self.height = 40
-        self.x = x
-        self.y = y
-        self.speed = 1
-        self.direction = 1
-
-    def draw(self, surface):
-        pygame.draw.rect(surface, WHITE, (self.x, self.y, self.width, self.height))
-        # Eyes and mouth
-        eye_size = 10
-        pygame.draw.rect(surface, BLACK, (self.x + self.width // 4 - eye_size // 2, self.y + self.height // 4, eye_size, eye_size))
-        pygame.draw.rect(surface, BLACK, (self.x + 3 * self.width // 4 - eye_size // 2, self.y + self.height // 4, eye_size, eye_size))
-        mouth_width = 20
-        pygame.draw.rect(surface, BLACK, (self.x + self.width // 2 - mouth_width // 2, self.y + 3 * self.height // 4, mouth_width, eye_size))
-
-# Define the Bullet class
-class Bullet:
-    def __init__(self, x, y, dy):
-        self.width = 5
-        self.height = 10
-        self.x = x
-        self.y = y
-        self.dy = dy
-
-    def draw(self, surface):
-        pygame.draw.rect(surface, WHITE, (self.x, self.y, self.width, self.height))
-
-# Game mechanics functions
-def handle_player_movement(worldstate):
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT] and worldstate.player.x > 0:
-        worldstate.player.x -= worldstate.player.speed
-    if keys[pygame.K_RIGHT] and worldstate.player.x < SCREEN_WIDTH - worldstate.player.width:
-        worldstate.player.x += worldstate.player.speed
-
-def handle_shooting(worldstate):
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_SPACE]:
-        if worldstate.player.fastFire:
-            bullet = Bullet(worldstate.player.x + worldstate.player.width // 2, worldstate.player.y, -10)
-            worldstate.bullets.append(bullet)
-        else:
-            if not any(bullet.dy < 0 for bullet in worldstate.bullets):
-                bullet = Bullet(worldstate.player.x + worldstate.player.width // 2, worldstate.player.y, -10)
-                worldstate.bullets.append(bullet)
-
-def cheat_FF(worldstate):
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_f]:        
-        worldstate.player.fastFire = True
-
-def update_bullets(worldstate):
-    for bullet in worldstate.bullets[:]:
-        bullet.y += bullet.dy
-        if bullet.y < 0 or bullet.y > SCREEN_HEIGHT:
-            worldstate.bullets.remove(bullet)
-
-def update_enemies(worldstate):
-    if not worldstate.enemies:
-        return
-    leftmost = min(enemy.x for enemy in worldstate.enemies)
-    rightmost = max(enemy.x + enemy.width for enemy in worldstate.enemies)
-    move_down = False
-    change_direction = False
-    if rightmost >= SCREEN_WIDTH or leftmost <= 0:
-        change_direction = True
-        move_down = True
-
-    for enemy in worldstate.enemies:
-        if change_direction:
-            enemy.direction *= -1
-        enemy.x += enemy.speed * enemy.direction
-        if move_down:
-            enemy.y += 10
-        if enemy.y + enemy.height >= worldstate.player.y:
-            worldstate.enemies.clear()
-            display_game_over(screen)
-            worldstate.__init__()
-
-def handle_collisionsE(worldstate):
-    for bullet in worldstate.bullets[:]:
-        for enemy in worldstate.enemies[:]:
-            if bullet.x < enemy.x + enemy.width and bullet.x + bullet.width > enemy.x and bullet.y < enemy.y + enemy.height and bullet.y + bullet.height > enemy.y:
-                worldstate.enemies.remove(enemy)
-                worldstate.bullets.remove(bullet)
-                worldstate.score += 10
+def extract_summary(response_text):
+    """Extracts the summary section from the GPT response to display in the game."""
+    summary_marker = "# Summary:"
+    summary_text = ""
+    for line in response_text.splitlines():
+        if summary_marker in line:
+            summary_text += line.replace(summary_marker, "").strip()
+        elif summary_text:
+            # Continue adding summary lines until a blank line or function definition
+            if line.strip() == "" or line.startswith("def "):
                 break
-
-def display_message(surface, text, duration=2):
-    font = pygame.font.SysFont(None, 48)
-    message = font.render(text, True, WHITE)
-    text_rect = message.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
-    surface.blit(message, text_rect)
-    pygame.display.flip()
-    pygame.time.delay(duration * 1000)
-
-def display_game_over(surface):
-    font = pygame.font.SysFont(None, 48)
-    game_over_text = font.render("Game Over!", True, WHITE)
-    restart_text = font.render("Press SPACE to Restart", True, WHITE)
-    game_over_rect = game_over_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 30))
-    restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 30))
-    surface.blit(game_over_text, game_over_rect)
-    surface.blit(restart_text, restart_rect)
-    pygame.display.flip()
-    waiting = True
-    while waiting:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                waiting = False
-
-def update_boss(boss):
-    boss.move()
-
-def handle_collisions_boss(worldstate, boss):
-    for bullet in worldstate.bullets[:]:
-        if bullet.x < boss.x + boss.width and bullet.x + bullet.width > boss.x and bullet.y < boss.y + boss.height and bullet.y + bullet.height > boss.y:
-            boss.health -= 1
-            worldstate.bullets.remove(bullet)
-            worldstate.score += 50
-
-def display_menu(surface):
-    font = pygame.font.SysFont(None, 48)
-    menu_options = ["Start Game", "Quit"]
-    selected_option = 0
-    while True:
-        surface.fill(BLACK)
-        for i, option in enumerate(menu_options):
-            color = (0, 255, 0) if i == selected_option else WHITE
-            text = font.render(option, True, color)
-            text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + i * 50))
-            surface.blit(text, text_rect)
-        pygame.display.flip()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
-                    selected_option = (selected_option - 1) % len(menu_options)
-                elif event.key == pygame.K_DOWN:
-                    selected_option = (selected_option + 1) % len(menu_options)
-                elif event.key == pygame.K_RETURN:
-                    if selected_option == 0:
-                        return
-                    elif selected_option == 1:
-                        pygame.quit()
-                        sys.exit()
-
-def main():
-    display_menu(screen)
-    running = True
-    level = 1
-    worldstate = WorldState()
-    boss = None
-    bossCounter = 0
-    dynamic_functions, level_summary = prepare_next_level(level)
-
-    while running:
-        screen.fill(BLACK)
-        boss_level = (level % 3) == 0
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-        if boss_level and boss is None:
-            boss = Boss(SCREEN_WIDTH // 2 - 60, 50)
-            base_health = boss.health
-            boss.health = base_health + bossCounter * 2
-
-        handle_player_movement(worldstate)
-        handle_shooting(worldstate)
-        update_bullets(worldstate)
-        cheat_FF(worldstate)
-
-        if boss:
-            update_boss(boss)
-            handle_collisions_boss(worldstate, boss)
-            if boss.health <= 0:
-                boss = None
-                display_message(screen, f"Level {level} Complete! Next Level", duration=2)
-                level += 1
-                dynamic_functions, level_summary = prepare_next_level(level)
-        else:
-            update_enemies(worldstate)
-            handle_collisionsE(worldstate)
-            if not worldstate.enemies:
-                display_message(screen, f"Level {level} Complete! Next Level", duration=2)
-                level += 1
-                dynamic_functions, level_summary = prepare_next_level(level)
-                worldstate.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
-                for enemy in worldstate.enemies:
-                    enemy.speed += level if level <= 4 else level / 2
-
-        for func_name, func in dynamic_functions.items():
-            try:
-                func(worldstate)
-            except Exception as e:
-                print(f"Error executing {func_name}: {e}")
-
-        worldstate.player.draw(screen)
-        if boss:
-            boss.draw(screen)
-        else:
-            for enemy in worldstate.enemies:
-                enemy.draw(screen)
-        
-        for bullet in worldstate.bullets:
-            bullet.draw(screen)
-
-        font = pygame.font.Font("nothing-font-5x7.ttf", 36)
-        score_text = font.render(f"Score: {worldstate.score}", True, WHITE)
-        screen.blit(score_text, (10, 10))
-
-        display_summary_message(screen, level_summary)
-        pygame.display.flip()
-        clock.tick(60)
-
-    pygame.quit()
-    sys.exit()
-
-def display_summary_message(surface, summary_text):
-    font = pygame.font.Font("nothing-font-5x7.ttf", 24)
-    max_width = SCREEN_WIDTH - 40
-    lines = []
-    words = summary_text.split()
-    current_line = ""
-    for word in words:
-        test_line = current_line + " " + word
-        text_surface = font.render(test_line, True, WHITE)
-        if text_surface.get_width() < max_width:
-            current_line = test_line
-        else:
-            lines.append(current_line)
-            current_line = word + " "
-    lines.append(current_line)
-
-    y_offset = SCREEN_HEIGHT - 60 - (len(lines) - 1) * 24
-    for line in lines:
-        text = font.render(line, True, WHITE)
-        surface.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, y_offset))
-        y_offset += 24
-    pygame.display.flip()
-
-if __name__ == "__main__":
-    main()
+            summary_text += " " + line.strip()
+    return summary_text.strip()
