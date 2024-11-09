@@ -6,8 +6,8 @@ def add_function_for_level(level):
     print(f"Requesting new function for Level {level}...")
     
     # 1. Construct the prompts based on the level and current game state
-    user_prompt = open("./prompts/user_prompt.txt", "r").read() + f"\nAdd a unique gameplay mechanic for Level {level}."
-    system_prompt = open("./prompts/system_prompt.txt", "r").read()
+    user_prompt = open("./llm/prompts/user_prompt.txt", "r").read() + f"\nAdd a unique gameplay mechanic for Level {level}."
+    system_prompt = open("./llm/prompts/system_prompt.txt", "r").read()
 
     # 2. Request the function from GPT
     gpt = GPT()

@@ -1,5 +1,5 @@
 from typing import List
-from config import OPENAI_KEY
+from llm.config import OPENAI_KEY
 from openai import OpenAI
 
 
