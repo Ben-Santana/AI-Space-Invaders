@@ -1,13 +1,6 @@
-<<<<<<< HEAD
-import math
-import random
-import WorldState
-
-=======
->>>>>>> 54d15a9b1972ba912d23198504810ea65100f414
-
 import pygame
 import sys
+import WorldState
 
 # Initialize Pygame
 pygame.init()
@@ -27,6 +20,7 @@ pygame.display.set_caption("Space Invaders")
 # Clock for controlling the frame rate
 clock = pygame.time.Clock()
 
+#################################################################
 # Define the WorldState class
 class WorldState:
     def __init__(self):
@@ -34,7 +28,10 @@ class WorldState:
         self.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
         self.bullets = []
         self.score = 0
+#################################################################
 
+
+#################################################################
 # Define the Player class
 class Player:
     def __init__(self):
@@ -46,7 +43,10 @@ class Player:
 
     def draw(self, surface):
         pygame.draw.rect(surface, WHITE, (self.x, self.y, self.width, self.height))
+#################################################################
 
+
+#################################################################
 # Define the Enemy class
 class Enemy:
     def __init__(self, x, y):
@@ -59,7 +59,10 @@ class Enemy:
 
     def draw(self, surface):
         pygame.draw.rect(surface, WHITE, (self.x, self.y, self.width, self.height))
+#################################################################
 
+
+#################################################################
 # Define the Bullet class
 class Bullet:
     def __init__(self, x, y, dy):
@@ -71,6 +74,7 @@ class Bullet:
 
     def draw(self, surface):
         pygame.draw.rect(surface, WHITE, (self.x, self.y, self.width, self.height))
+#################################################################
 
 # Function to handle player movement
 def handle_player_movement(worldstate):
