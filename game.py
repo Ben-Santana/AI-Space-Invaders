@@ -1,6 +1,6 @@
 import math
 import random
-
+import copy
 import pygame
 import sys
 
@@ -53,7 +53,8 @@ class Boss:
         self.height = 90
         self.x = x
         self.y = y
-        self.health = 30  # More health than regular enemies
+        self.maxHP = 30
+        self.health = copy.deepcopy(self.maxHP)  # More health than regular enemies
         self.speed = 2
         self.direction = 1  # 1 for right, -1 for left
 
