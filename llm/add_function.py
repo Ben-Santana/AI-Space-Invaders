@@ -11,4 +11,3 @@ def append_to_python_file(content: str):
 
     except Exception as e:
         print(f"An error occurred: {e}")
-
