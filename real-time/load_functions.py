@@ -1,1 +1,0 @@
-# has function that returns functions in dynamic.py
