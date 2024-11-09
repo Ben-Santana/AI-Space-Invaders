@@ -4,6 +4,8 @@ import copy
 import pygame
 import sys
 
+from real_time.manage_functions import prepare_next_level
+
 # Initialize Pygame
 pygame.init()
 
@@ -311,15 +313,42 @@ def display_menu(surface):
                         pygame.quit()
                         sys.exit()
 
+def display_summary_message(surface, summary_text):
+    """Displays the summary of the new level at the bottom of the screen."""
+    font = pygame.font.Font("nothing-font-5x7.ttf", 24)
+    max_width = SCREEN_WIDTH - 40
+    lines = []
+    words = summary_text.split()
+    current_line = ""
+    for word in words:
+        test_line = current_line + " " + word
+        text_surface = font.render(test_line, True, WHITE)
+        if text_surface.get_width() < max_width:
+            current_line = test_line
+        else:
+            lines.append(current_line)
+            current_line = word + " "
+    lines.append(current_line)
+
+    y_offset = SCREEN_HEIGHT - 60 - (len(lines) - 1) * 24
+    for line in lines:
+        text = font.render(line, True, WHITE)
+        surface.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, y_offset))
+        y_offset += 24
+    pygame.display.flip()
+
 
 def main():
     # Display the menu before starting the game
     display_menu(screen)
     running = True
-    level = 1
+    level = 1  # Initialize level
     worldstate = WorldState()
     boss = None
     bossCounter = 0
+
+    # Load initial dynamic functions and summary for level 1
+    dynamic_functions, level_summary = prepare_next_level(level)
 
     while running:
         screen.fill(BLACK)
@@ -329,17 +358,18 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-        if boss_level and boss is None:  # Spawn the boss if it's a boss level
+        # Spawn the boss if it's a boss level
+        if boss_level and boss is None:
             boss = Boss(SCREEN_WIDTH // 2 - 60, 50)  # Center the boss at the top
             boss.health = 30 + (level // 3) * 10
 
-
-
+        # Handle player and bullet movements
         handle_player_movement(worldstate)
         handle_shooting(worldstate)
         update_bullets(worldstate)
         cheat_FF(worldstate)
 
+        # Handle boss or enemies
         if boss:
             update_boss(boss)
             handle_collisions_boss(worldstate, boss)
@@ -347,20 +377,30 @@ def main():
                 boss = None
                 display_message(screen, f"Level {level} Complete! Next Level", duration=2)
                 level += 1
+                dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
         else:
             update_enemies(worldstate)
             handle_collisionsE(worldstate)
             if not worldstate.enemies:
                 display_message(screen, f"Level {level} Complete! Next Level", duration=2)
                 level += 1
+                dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
                 worldstate.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
-                if(level <= 4):
+                if level <= 4:
                     for enemy in worldstate.enemies:
                         enemy.speed += level
                 else:
                     for enemy in worldstate.enemies:
                         enemy.speed += level / 2
 
+        # Call dynamically loaded functions for this level
+        for func_name, func in dynamic_functions.items():
+            try:
+                func(worldstate)  # Execute each function, passing the game state
+            except Exception as e:
+                print(f"Error executing {func_name}: {e}")
+
+        # Draw player, boss, enemies, and bullets
         worldstate.player.draw(screen)
         if boss:
             boss.draw(screen)
@@ -371,15 +411,20 @@ def main():
         for bullet in worldstate.bullets:
             bullet.draw(screen)
 
+        # Display score
         font = pygame.font.Font("nothing-font-5x7.ttf", 36)
         score_text = font.render(f"Score: {worldstate.score}", True, WHITE)
         screen.blit(score_text, (10, 10))
+
+        # Display the level summary
+        display_summary_message(screen, level_summary)
 
         pygame.display.flip()
         clock.tick(60)
 
     pygame.quit()
     sys.exit()
+
 
 if __name__ == "__main__":
     main()
