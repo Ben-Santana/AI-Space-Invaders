@@ -1,1 +1,0 @@
-# writes a function to dynamin.py
