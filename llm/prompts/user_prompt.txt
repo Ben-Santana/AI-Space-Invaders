@@ -1,2 +1,2 @@
 Generate a single new function that implements a compelling feature. Here are the functions that have been added so far:
-Make sure that the summary you provide is half a line
+Make sure that the summary you provide is half a line. Dont make a function that is alike any of the following functions:
