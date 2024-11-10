@@ -68,8 +68,6 @@ class Player:
         #Cockpit
         pygame.draw.rect(surface, BLACK, ((self.x + 20, self.y + 10, 10,10)))
         
-
-# Define the Boss Class
 class Boss:
     def __init__(self, x, y):
         self.width = 120
@@ -82,6 +80,7 @@ class Boss:
         self.direction = 1  # 1 for right, -1 for left
 
     def draw(self, surface):
+        # Draw the boss sprite
         pygame.draw.rect(surface, RED, (self.x, self.y, self.width, self.height))
         # Eyes (small black squares)
         eye_size = 30
@@ -112,9 +111,12 @@ class Boss:
                 (tooth_x + tooth_width // 2, mouth_y + tooth_height),  # Bottom middle point
                 (tooth_x + tooth_width, mouth_y)  # Top right point of the triangle
             ])
-            # Draw health bar
-            health_ratio = self.health / 30
-            pygame.draw.rect(surface, GREEN, (self.x, self.y - 10, self.width * health_ratio, 5))
+
+        # Display the health percentage above the boss sprite
+        health_percentage = (self.health / self.maxHP) * 100
+        font = pygame.font.Font(None, 30)  # Font for displaying the percentage
+        health_text = font.render(f"{int(health_percentage)}%", True, WHITE)
+        surface.blit(health_text, (self.x + self.width // 2 - health_text.get_width() // 2, self.y - 20))
 
     def move(self):
         # Boss bounces left and right and moves down slowly
@@ -149,7 +151,6 @@ class Enemy:
         pygame.draw.rect(surface, BLACK, (self.x, (self.y + self.height) - 20, 5, 10))
         pygame.draw.rect(surface, BLACK, (self.x, self.y, 5, 5))
         pygame.draw.rect(surface, BLACK, (self.x + 10, self.y +5, 7.5, 7.5))
-
         # Right Side
         pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 5, (self.y + self.height) - 5, 5, 5))
         pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 20, (self.y + self.height) - 10, 15, 5))
@@ -340,18 +341,25 @@ def display_message(surface, text, duration=2, height=None):
     # Pause for a short duration (in seconds)
     pygame.time.delay(duration * 1000)
 
+global level
+level = 1  # Initialize level globally
+
 def display_game_over(surface):
+    global level  # Ensure level reset happens only here
     font = pygame.font.Font("nothing-font-5x7.ttf", 48)
     game_over_text = font.render("Game Over!", True, WHITE)
     restart_text = font.render("Press SPACE to Restart", True, WHITE)
     
+    # Reset level to 1 only when the game is truly over
+    level = 1
+
     game_over_rect = game_over_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 30))
     restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 30))
-    
+
     surface.blit(game_over_text, game_over_rect)
     surface.blit(restart_text, restart_rect)
     pygame.display.flip()
-    
+
     # Wait for the player to press the space bar to restart
     waiting = True
     while waiting:
@@ -423,42 +431,38 @@ def display_menu(surface):
                         pygame.quit()
                         sys.exit()
 
-# def display_summary_message(surface, summary_text):
-#     """Displays the summary of the new level at the bottom of the screen."""
-#     font = pygame.font.Font("nothing-font-5x7.ttf", 24)
-#     max_width = SCREEN_WIDTH - 40
-#     lines = []
-#     words = summary_text.split()
-#     current_line = ""
-#     for word in words:
-#         test_line = current_line + " " + word
-#         text_surface = font.render(test_line, True, WHITE)
-#         if text_surface.get_width() < max_width:
-#             current_line = test_line
-#         else:
-#             lines.append(current_line)
-#             current_line = word + " "
-#     lines.append(current_line)
+def display_summary_message(surface, summary_text):
+    """Displays the summary of the new level at the bottom of the screen."""
+    font = pygame.font.Font("nothing-font-5x7.ttf", 24)
+    max_width = SCREEN_WIDTH - 40
+    lines = []
+    words = summary_text.split()
+    current_line = ""
+    for word in words:
+        test_line = current_line + " " + word
+        text_surface = font.render(test_line, True, WHITE)
+        if text_surface.get_width() < max_width:
+            current_line = test_line
+        else:
+            lines.append(current_line)
+            current_line = word + " "
+    lines.append(current_line)
 
-#     y_offset = SCREEN_HEIGHT - 60 - (len(lines) - 1) * 24
-#     for line in lines:
-#         text = font.render(line, True, WHITE)
-#         surface.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, y_offset))
-#         y_offset += 24
-#     pygame.display.flip()
+    y_offset = SCREEN_HEIGHT - 60 - (len(lines) - 1) * 24
+    for line in lines:
+        text = font.render(line, True, WHITE)
+        surface.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, y_offset))
+        y_offset += 24
+    pygame.display.flip()
 
 
 def main():
-    # Display the menu before starting the game
-    display_menu(screen)
+    global level  # Use the global level here
+    display_menu(screen)  # Display the menu before starting the game
+
     running = True
-    level = 1  # Initialize level
     worldstate = WorldState()
     boss = None
-    bossCounter = 0
-
-    # Load initial dynamic functions and summary for level 1
-    dynamic_functions, level_summary = prepare_next_level(level)
 
     while running:
         screen.fill(BLACK)
@@ -468,9 +472,10 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-        # Spawn the boss if it's a boss level
+        # Handle boss spawning
         if boss_level and boss is None:
             boss = Boss(SCREEN_WIDTH // 2 - 60, 50)  # Center the boss at the top
+            boss.maxHP = 30 + (level // 3) * 10
             boss.health = 30 + (level // 3) * 10
 
         # Handle player and bullet movements
@@ -479,38 +484,27 @@ def main():
         update_bullets(worldstate)
         cheat_FF(worldstate)
 
-        # Handle boss or enemies
+        # Boss or enemies handling
         if boss:
             update_boss(boss, worldstate)
             handle_collisions_boss(worldstate, boss)
             if boss.health <= 0:  # Boss defeated
                 boss = None
-                display_message(screen, f"Level {level} Complete!\nNext Level!", duration=1, height= 400)
-                level += 1
-                dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
+                display_message(screen, f"Level {level} Complete!\nNext Level!", duration=1, height=400)
+                level += 1  # Increment level correctly
         else:
             update_enemies(worldstate)
             handle_collisionsE(worldstate)
             if not worldstate.enemies:
                 display_message(screen, f"Level {level} Complete!\nNext Level!", duration=1, height=400)
-                level += 1
-                dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
+                level += 1  # Increment level
                 worldstate.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
-                if level <= 4:
-                    for enemy in worldstate.enemies:
-                        enemy.speed += level
-                else:
-                    for enemy in worldstate.enemies:
-                        enemy.speed += level / 2
+                
+                # Speed adjustment based on the level
+                for enemy in worldstate.enemies:
+                    enemy.speed += (level / 2) if level > 4 else level
 
-        # Call dynamically loaded functions for this level
-        for func_name, func in dynamic_functions.items():
-            try:
-                func(worldstate)  # Execute each function, passing the game state
-            except Exception as e:
-                print(f"Error executing {func_name}: {e}")
-
-        # Draw player, boss, enemies, and bullets
+        # Draw game elements
         worldstate.player.draw(screen)
         if boss:
             boss.draw(screen)
@@ -525,10 +519,6 @@ def main():
         font = pygame.font.Font("nothing-font-5x7.ttf", 36)
         score_text = font.render(f"Score: {worldstate.score}", True, WHITE)
         screen.blit(score_text, (10, 10))
-
-
-        # Display the level summary
-        display_summary_message(screen, level_summary)
 
         pygame.display.flip()
         clock.tick(60)
