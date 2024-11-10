@@ -53,6 +53,7 @@ You are an expert software engineer specializing in game development. Your task 
     - With this you can add meteors, portals and more
     - Don't make purely black objects since the background is black and the player won't be able to see the object
     - Remember the player cannot leave the height: SCREEN_HEIGHT - 60, so objects that interact with the player should either move around or be in that y range
+    - Don't make the objects disappear too fast, whenever possible so that the player can use / see them.
     - Objects must take in:
         - x, y coordinates
         - a draw function that takes in the object and a pygame screen and displays it on the screen

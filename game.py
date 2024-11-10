@@ -13,8 +13,8 @@ from real_time.manage_functions import prepare_next_level
 pygame.init()
 
 # Screen dimensions
-SCREEN_WIDTH = 640
-SCREEN_HEIGHT = 550
+SCREEN_WIDTH = 1000
+SCREEN_HEIGHT = 700
 PLAYER_HEIGHT = SCREEN_HEIGHT - 60
 
 # Colors
