@@ -19,8 +19,6 @@ BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 
-# Set up the display
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Space Invaders")
 
 # Clock for controlling the frame rate
@@ -31,8 +29,13 @@ class WorldState:
     def __init__(self):
         self.player = Player()
         self.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
+        self.boss = None
         self.bullets = []
+        self.objects = []
         self.score = 0
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.level = 1
+        self.boss_frequency = 3
 
 # Define the Player class
 class Player:
@@ -64,8 +67,6 @@ class Player:
         #Cockpit
         pygame.draw.rect(surface, BLACK, ((self.x + 20, self.y + 10, 10,10)))
         
-
-# Define the Boss Class
 class Boss:
     def __init__(self, x, y):
         self.width = 120
@@ -120,8 +121,6 @@ class Boss:
         if random.randint(1, 100) > 98:  # Small chance to move down
             self.y += 10
 
-
-# Define the Enemy class
 class Enemy:
     def __init__(self, x, y):
 
@@ -145,8 +144,7 @@ class Enemy:
         mouth_width = 20
         pygame.draw.rect(surface, BLACK, (self.x + self.width // 2 - mouth_width // 2, self.y + 3 * self.height // 4, mouth_width, eye_size))
 
-        
-class Obstacle:
+class Object:
     # @params
     #  - draw_function : a function that takes in screen and the obstacle and draws it
     #  - update_function : a function that takes in the obstacle and updates it
@@ -170,7 +168,6 @@ class Obstacle:
         except Exception as e:
             pass      
 
-# Define the Bullet class
 class Bullet:
     def __init__(self, x, y, dy):
         self.width = 5
@@ -182,7 +179,6 @@ class Bullet:
     def draw(self, surface):
         pygame.draw.rect(surface, WHITE, (self.x, self.y, self.width, self.height))
 
-# Function to handle player movement
 def handle_player_movement(worldstate):
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT] and worldstate.player.x > 0:
@@ -190,8 +186,7 @@ def handle_player_movement(worldstate):
     if keys[pygame.K_RIGHT] and worldstate.player.x < SCREEN_WIDTH - worldstate.player.width:
         worldstate.player.x += worldstate.player.speed
 
-# Function to handle shooting
-def handle_shooting(worldstate):
+def handle_player_shooting(worldstate):
     keys = pygame.key.get_pressed()
     if keys[pygame.K_SPACE]:
         # Limit to one bullet on screen
@@ -203,20 +198,18 @@ def handle_shooting(worldstate):
                 bullet = Bullet(worldstate.player.x + worldstate.player.width // 2, worldstate.player.y, -10)
                 worldstate.bullets.append(bullet)
 
-# Gives Cheat 
-def cheat_FF(worldstate):
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_f] and not worldstate.player.fastFire:        
-        worldstate.player.fastFire = True
-    elif keys[pygame.K_f] and worldstate.player.fastFire:
-        worldstate.player.fastFire = False
-
-# Function to update bullets
 def update_bullets(worldstate):
     for bullet in worldstate.bullets[:]:
         bullet.y += bullet.dy
         if bullet.y < 0 or bullet.y > SCREEN_HEIGHT:
             worldstate.bullets.remove(bullet)
+
+def handle_cheats(worldstate):
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_f] and not worldstate.player.fastFire:        
+        worldstate.player.fastFire = True
+    elif keys[pygame.K_f] and worldstate.player.fastFire:
+        worldstate.player.fastFire = False
 
 def update_enemies(worldstate):
     if not worldstate.enemies:
@@ -244,14 +237,11 @@ def update_enemies(worldstate):
         # Check if any enemy reaches the bottom of the screen
         if enemy.y + enemy.height >= worldstate.player.y:
             worldstate.enemies.clear()  # Clear all enemies to stop the game
-            display_game_over(screen)
+            display_game_over(worldstate.screen)
             # Restart the game
             worldstate.__init__()  # Reset the world state
             break
 
-
-
-# Function to handle collisions
 def handle_collisionsE(worldstate):
     for bullet in worldstate.bullets[:]:
         for enemy in worldstate.enemies[:]:
@@ -312,14 +302,6 @@ def display_game_over(surface):
                 sys.exit()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 waiting = False
-
-def update_boss(boss, worldstate):
-    boss.move()  # Move boss based on its behavior
-    if boss.y + boss.height >= worldstate.player.y:
-        worldstate.enemies.clear()  # Clear all enemies to stop the game
-        display_game_over(screen)
-        # Restart the game
-        worldstate.__init__()  # Reset the world state
 
 def handle_collisions_boss(worldstate, boss):
     for bullet in worldstate.bullets[:]:
@@ -396,96 +378,118 @@ def display_summary_message(surface, summary_text):
         y_offset += 24
     pygame.display.flip()
 
+def draw_all_entities(worldstate):
+    worldstate.player.draw(worldstate.screen)
+    if worldstate.boss:
+        worldstate.boss.draw(worldstate.screen)
+    else:
+        for enemy in worldstate.enemies:
+            enemy.draw(worldstate.screen)
+    
+    for bullet in worldstate.bullets:
+        bullet.draw(worldstate.screen)
+
+def spawn_boss(worldstate):
+    worldstate.boss = Boss(SCREEN_WIDTH // 2 - 60, 50)  # Center the boss at the top
+    base_health = worldstate.boss.health
+    worldstate.boss.health = worldstate.base_health + worldstate.level
+ 
+def update_boss(boss, worldstate):
+    boss.move()  # Move boss based on its behavior
+    if boss.y + boss.height >= worldstate.player.y:
+        worldstate.enemies.clear()  # Clear all enemies to stop the game
+        display_game_over(worldstate.screen)
+        # Restart the game
+        worldstate.__init__()  # Reset the world state
+
+def update_boss(worldstate):
+        boss.move()  # Move boss based on its behavior
+
+        if boss.y + boss.height >= worldstate.player.y:
+            worldstate.enemies.clear()  # Clear all enemies to stop the game
+            display_game_over(worldstate.screen)
+            # Restart the game
+            worldstate.__init__()  # Reset the world state
+
+        handle_collisions_boss(worldstate, boss)
+
+        if boss.health <= 0:  # Boss defeated
+            boss = None
+            display_message(worldstate.screen, f"Level {level} Complete! Next Level!", duration=2)
+            level += 1
+            dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
+
+def handle_new_level(worldstate):
+    boss = None
+    worldstate.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
+    display_message(worldstate.screen, f"Level {worldstate.level} Complete! Next Level!", duration=2)
+    worldstate.level += 1
+    dynamic_functions, level_summary = prepare_next_level(worldstate.level)  # Load new functions for the next level
+
+    if worldstate.level <= 4:
+        for enemy in worldstate.enemies:
+            enemy.speed += worldstate.level / 5
+        else:
+            for enemy in worldstate.enemies:
+                enemy.speed += worldstate.level / 10
+
+def display_score(worldstate):
+    font = pygame.font.Font("nothing-font-5x7.ttf", 36)
+    score_text = font.render(f"Score: {worldstate.score}", True, WHITE)
+    worldstate.screen.blit(score_text, (10, 10))
 
 def main():
+    # Initialize level, dynamic functions, and level summary
+    worldstate = WorldState()
+
     # Display the menu before starting the game
-    display_menu(screen)
+    display_menu(worldstate.screen)
     running = True
 
-    # Initialize level, dynamic functions, and level summary
-    level = 1
-    worldstate = WorldState()
-    dynamic_functions, level_summary = prepare_next_level(level)
-    boss = None
-    bossCounter = 0
+    dynamic_functions, level_summary = prepare_next_level(worldstate.level)
 
     while running:
-        screen.fill(BLACK)
-        boss_level = (level % 3) == 0  # Boss level every 3 levels
+        worldstate.screen.fill(BLACK)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
         # Spawn the boss if it's a boss level
-        if boss_level and boss is None:
-            boss = Boss(SCREEN_WIDTH // 2 - 60, 50)  # Center the boss at the top
-            base_health = boss.health
-            boss.health = base_health + bossCounter * 2
+        if worldstate.level % worldstate.boss_frequency == 0 and worldstate.boss is None:
+            spawn_boss(worldstate)
 
         # Handle player and bullet movements
         handle_player_movement(worldstate)
-        handle_shooting(worldstate)
+        handle_player_shooting(worldstate)
         update_bullets(worldstate)
-        cheat_FF(worldstate)
+        handle_cheats(worldstate)
+        update_enemies(worldstate)
+        draw_all_entities(worldstate)
 
-        # Handle boss or enemies
-        if boss:
-            update_boss(boss)
-            handle_collisions_boss(worldstate, boss)
-            if boss.health <= 0:  # Boss defeated
-                boss = None
-                display_message(screen, f"Level {level} Complete! Next Level!", duration=2)
-                level += 1
-                dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
+        if worldstate.boss:
+            update_boss(worldstate)
         else:
             update_enemies(worldstate)
             handle_collisionsE(worldstate)
             if not worldstate.enemies:
-                display_message(screen, f"Level {level} Complete! Next Level!", duration=2)
-                level += 1
-                dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
-                worldstate.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
-                if level <= 4:
-                    for enemy in worldstate.enemies:
-                        enemy.speed += level
-                else:
-                    for enemy in worldstate.enemies:
-                        enemy.speed += level / 2
+                handle_new_level(worldstate)
 
-        # Call dynamically loaded functions for this level
+        # YOUR FUNCTIONS WILL RUN HERE
         for func_name, func in dynamic_functions.items():
             try:
                 func(worldstate)  # Execute each function, passing the game state
             except Exception as e:
                 print(f"Error executing {func_name}: {e}")
 
-        # Draw player, boss, enemies, and bullets
-        worldstate.player.draw(screen)
-        if boss:
-            boss.draw(screen)
-        else:
-            for enemy in worldstate.enemies:
-                enemy.draw(screen)
-        
-        for bullet in worldstate.bullets:
-            bullet.draw(screen)
-
-        # Display score
-        font = pygame.font.Font("nothing-font-5x7.ttf", 36)
-        score_text = font.render(f"Score: {worldstate.score}", True, WHITE)
-        screen.blit(score_text, (10, 10))
-
-        # Display the level summary
-        display_summary_message(screen, level_summary)
+        display_score(worldstate)
+        display_summary_message(worldstate.screen, level_summary)
 
         pygame.display.flip()
         clock.tick(60)
 
     pygame.quit()
     sys.exit()
-
-
 
 if __name__ == "__main__":
     main()

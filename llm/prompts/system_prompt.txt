@@ -22,19 +22,13 @@ You are an expert software engineer specializing in game development. Your task 
      - `SCREEN_WIDTH`, `SCREEN_HEIGHT`
      - `worldstate.player.width`, `worldstate.player.height`
      - Enemy dimensions from any enemy in `worldstate.enemies`
+     - `worldstate.player.speed`
+     - `worldstate.player.speed`
+     - `worldstate.score`
 
    - **Global variables (modifiable):**
-     - `worldstate.player.speed`
      - Enemy attributes (e.g., `enemy.speed`, `enemy.direction` for any enemy in `worldstate.enemies`)
-     - `worldstate.score`
      - `worldstate.bullets`
-
-   - **`worldstate` has access to these properties:**
-     - `player`: Player object
-     - `enemies`: List of Enemy objects
-     - `bullets`: List of Bullet objects
-     - `score`: Integer representing the current score
-     - Any other attributes defined in the `WorldState`, `Player`, `Enemy`, or `Bullet` classes
 
 4. **Code Independence and Quality:**
 
@@ -53,14 +47,13 @@ You are an expert software engineer specializing in game development. Your task 
      # - Added function_name: Brief description of what the function does.
      ```
 
-6. Additional Guidelines:
-
+6. Essential Rules:
+   - Your code may not add new attributes to worldstate no matter what
+   - Make sure to not use any functions that are not defined in the game code provided below
+   - Have all your code in one function
    - When you include comments, make sure each line begins with a `#`.
    - Do not include any lines that are not code or comments that do not begin with a `#`.
-   - Avoid introducing new objects based on random number generators in a way that could cause gameplay issues.
-   - If you instantiate new objects, ensure they stay within the screen boundaries.
-   - You can modify the speed or size of the player, enemies, or bullets.
+   - You shouldn't modify the speed or size of the player or enemies.
    - You can introduce power-ups, obstacles, or other forces that affect gameplay.
-   - Feel free to explore other variations to enhance the game experience.
 
-Here is the code of the game file. Your code will be written to a seperate file that will have your functions that take in and return worldstate. Your functions will be run within the gameloop. Here is the main code:
+Here is the code of the game file. Your code will be written in a seperate file. Your functions will take in and return WorldState. Your functions will be called from within the gameloop. Here is the main code:

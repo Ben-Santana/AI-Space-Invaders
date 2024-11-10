@@ -1,44 +1,30 @@
 import pygame
-from game import WorldState, Obstacle, Player, Boss, Enemy, Bullet, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE, BLACK, GREEN, RED, screen, clock
+from game import WorldState, Object, Player, Boss, Enemy, Bullet, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE, BLACK, GREEN, RED, clock
+
 
 
 import pygame
-def deploy_shield_over_player(worldstate):  # Deploys a temporary shield over the player
-    shield_duration = 300  # Duration for the shield to stay active
-    shield_activation_score = 100  # Score at which the shield is activated
+def meteor_shower(worldstate):  # Introduces random meteors falling from the top of the screen
+    import random
+    # Define meteor attributes
+    meteor_chance = 0.02  # Probability of a meteor appearing each frame
+    meteor_speed = 3  # Speed at which meteors fall
+    
+    # Add new meteors at random
+    if random.random() < meteor_chance:
+        x_position = random.randint(0, SCREEN_WIDTH)
+        meteor = {'x': x_position, 'y': 0, 'width': 10, 'height': 20}
+        worldstate.meteors.append(meteor)
 
-    if worldstate.score >= shield_activation_score:
-        current_time = pygame.time.get_ticks()
-        if not hasattr(worldstate, 'shield_activated'):
-            worldstate.shield_activated = current_time
-
-        if current_time - worldstate.shield_activated < shield_duration:
-            # Draw a shield around the player
-            shield_color = (0, 255, 0)
-            player_x = worldstate.player.x
-            player_y = worldstate.player.y
-            shield_padding = 5
-            shield_rect = (
-                player_x - shield_padding,
-                player_y - shield_padding,
-                worldstate.player.width + 2 * shield_padding,
-                worldstate.player.height + 2 * shield_padding
-            )
-            pygame.draw.rect(worldstate.screen, shield_color, shield_rect, 2)
-
-            # Prevent enemy bullets from hitting the player
-            for bullet in worldstate.bullets:
-                if (
-                    bullet.x > player_x - shield_padding
-                    and bullet.x < player_x + worldstate.player.width + shield_padding
-                    and bullet.y > player_y - shield_padding
-                    and bullet.y < player_y + worldstate.player.height + shield_padding
-                ):
-                    worldstate.bullets.remove(bullet)
-
-        # Reset shield activation when duration is exceeded
-        else:
-            delattr(worldstate, 'shield_activated')
+    # Move meteors and check for collisions
+    for meteor in worldstate.meteors[:]:
+        meteor['y'] += meteor_speed
+        if meteor['y'] > SCREEN_HEIGHT:
+            worldstate.meteors.remove(meteor)
+        elif (worldstate.player.x < meteor['x'] < worldstate.player.x + worldstate.player.width and
+              worldstate.player.y < meteor['y'] < worldstate.player.y + worldstate.player.height):
+            worldstate.lives -= 1
+            worldstate.meteors.remove(meteor)
 
 # Summary:
-# - Added deploy_shield_over_player: Activates a temporary shield above the player at a certain score.
+# - Added meteor_shower: Introduces falling meteors that the player must avoid.
