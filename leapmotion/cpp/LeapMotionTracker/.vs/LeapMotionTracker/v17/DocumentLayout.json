@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\madha\\Downloads\\main\\AI-Space-Invaders\\leapmotion\\cpp\\LeapMotionTracker\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{8FC50051-6680-4299-B5F8-48697FE5C648}|LeapMotionTracker\\LeapMotionTracker.vcxproj|C:\\Users\\madha\\Downloads\\main\\AI-Space-Invaders\\leapmotion\\cpp\\LeapMotionTracker\\LeapMotionTracker\\LeapMotionTracker.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{8FC50051-6680-4299-B5F8-48697FE5C648}|LeapMotionTracker\\LeapMotionTracker.vcxproj|solutionrelative:LeapMotionTracker\\LeapMotionTracker.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "LeapMotionTracker.cpp",
+              "DocumentMoniker": "C:\\Users\\madha\\Downloads\\main\\AI-Space-Invaders\\leapmotion\\cpp\\LeapMotionTracker\\LeapMotionTracker\\LeapMotionTracker.cpp",
+              "RelativeDocumentMoniker": "LeapMotionTracker\\LeapMotionTracker.cpp",
+              "ToolTip": "C:\\Users\\madha\\Downloads\\main\\AI-Space-Invaders\\leapmotion\\cpp\\LeapMotionTracker\\LeapMotionTracker\\LeapMotionTracker.cpp",
+              "RelativeToolTip": "LeapMotionTracker\\LeapMotionTracker.cpp",
+              "ViewState": "AQIAADAAAAAAAAAAAAAAAEQAAAA9AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-11-10T15:01:58.736Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
