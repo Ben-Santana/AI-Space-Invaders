@@ -1,0 +1,10 @@
+^C:\USERS\MADHA\DOWNLOADS\AI-SPACE-INVADERS\LEAPPROJECT\CMAKELISTS.TXT
+setlocal
+C:\ST\STM32CubeCLT_1.15.1\CMake\bin\cmake.exe -SC:/Users/madha/Downloads/AI-Space-Invaders/LeapProject -BC:/Users/madha/Downloads/AI-Space-Invaders/LeapProject/build --check-stamp-file C:/Users/madha/Downloads/AI-Space-Invaders/LeapProject/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

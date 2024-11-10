@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\madha\Downloads\AI-Space-Invaders\LeapProject\build\CMakeFiles\86dc30c9a5986f46eeec1024294092f5\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{69E64546-E30A-333F-90BE-B0562E75F51C}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
