@@ -1,6 +1,4 @@
 import importlib
-import inspect
-import sys
 from llm.api_call import GPT
 
 def add_function_for_level(level):
@@ -47,7 +45,7 @@ def load_and_execute_functions(module_name="real_time.dynamic"):
         print("Functions Loaded just now are: ", functions)
         return functions
     except Exception as e:
-        print(f"Error loading functions from {module_name}: {e}")
+        print(f"Error loading functions from dynamic.py: {e}")
         return {}
 
     
