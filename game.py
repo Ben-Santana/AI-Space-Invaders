@@ -7,13 +7,13 @@ import sys
 from real_time.manage_functions import prepare_next_level
 
 
-# from real_time.manage_functions import prepare_next_level
+from real_time.manage_functions import prepare_next_level
 
 # Initialize Pygame
 pygame.init()
 
 # Screen dimensions
-SCREEN_WIDTH = 620
+SCREEN_WIDTH = 640
 SCREEN_HEIGHT = 550
 PLAYER_HEIGHT = SCREEN_HEIGHT - 60
 
@@ -24,8 +24,16 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 PURPLE = (200, 0, 255)
 ORANGE = (255, 200, 0)
+BLUE = (0, 0, 255)
+
+# Bar properties
+BAR_WIDTH = SCREEN_WIDTH - 40
+BAR_HEIGHT = 15
+BAR_X = 20
+BAR_Y = SCREEN_HEIGHT - 5
 
 # Set up the display
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Space Invaders")
 
 # Clock for controlling the frame rate
@@ -126,7 +134,7 @@ class Boss:
 
     def move(self):
         # Boss bounces left and right and moves down slowly
-        if self.x <= 0 or self.x + self.width >= SCREEN_WIDTH - 10:
+        if self.x <= 20 or self.x + self.width >= SCREEN_WIDTH - 20:
             self.direction *= -1
         self.x += self.speed * self.direction
         if random.randint(1, 100) > 98:  # Small chance to move down
@@ -146,19 +154,19 @@ class Enemy:
     def draw(self, surface):
         pygame.draw.rect(surface, PURPLE, (self.x, self.y, self.width, self.height))
         # Middle
-        pygame.draw.rect(surface, BLACK, (self.x + 20, (self.y + self.height) - 5, 15, 5))
-        pygame.draw.rect(surface, BLACK, (self.x + 25, (self.y + self.height) - 10, 5, 5))
+        pygame.draw.rect(surface, BLACK, (self.x + 15, (self.y + self.height) - 5, 25, 5))
+        pygame.draw.rect(surface, BLACK, (self.x + 20, (self.y + self.height) - 10, 15, 5))
         pygame.draw.rect(surface, BLACK, (self.x + 10, (self.y + self.height) - 15, 35, 5))
         pygame.draw.rect(surface, BLACK, (self.x + 20, (self.y + self.height) - 20, 15, 5))
         # Left Side
         pygame.draw.rect(surface, BLACK, (self.x, (self.y + self.height) - 5, 5, 5))
-        pygame.draw.rect(surface, BLACK, (self.x + 5, (self.y + self.height) - 10, 15, 5))
+        pygame.draw.rect(surface, BLACK, (self.x + 5, (self.y + self.height) - 10, 10, 5))
         pygame.draw.rect(surface, BLACK, (self.x, (self.y + self.height) - 20, 5, 10))
         pygame.draw.rect(surface, BLACK, (self.x, self.y, 5, 5))
         pygame.draw.rect(surface, BLACK, (self.x + 10, self.y +5, 7.5, 7.5))
         # Right Side
         pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 5, (self.y + self.height) - 5, 5, 5))
-        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 20, (self.y + self.height) - 10, 15, 5))
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 15, (self.y + self.height) - 10, 10, 5))
         pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 5, (self.y + self.height) - 20, 5, 10))
         pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 5, self.y, 5, 5))
         pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 17.5, self.y +5, 7.5, 7.5))        
@@ -208,9 +216,9 @@ class Bullet:
 # Function to handle player movement
 def handle_player_movement(worldstate):
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT] and worldstate.player.x > 10:
+    if keys[pygame.K_LEFT] and worldstate.player.x > 20:
         worldstate.player.x -= worldstate.player.speed
-    if keys[pygame.K_RIGHT] and worldstate.player.x < SCREEN_WIDTH - worldstate.player.width - 10:
+    if keys[pygame.K_RIGHT] and worldstate.player.x < SCREEN_WIDTH - worldstate.player.width - 20:
         worldstate.player.x += worldstate.player.speed
     if keys[pygame.K_SPACE]:
         handle_player_shooting(worldstate)
@@ -218,8 +226,6 @@ def handle_player_movement(worldstate):
         handle_cheats(worldstate)
     if keys[pygame.K_n]:  # Use the N key for the nuke
         use_nuke(worldstate)
-
-
 
 
 
@@ -262,7 +268,7 @@ def update_enemies(worldstate):
     # Check if the entire group hits the wall
     move_down = False
     change_direction = False
-    if rightmost >= SCREEN_WIDTH - 10 or leftmost <= 10:
+    if rightmost >= SCREEN_WIDTH - 20 or leftmost <= 20:
         change_direction = True
         move_down = True
 
@@ -376,15 +382,15 @@ def update_boss(boss, worldstate):
         # Restart the game
         worldstate.__init__()  # Reset the world state
 
-def handle_collisions_boss(worldstate, boss):
+def handle_collisions_boss(worldstate):
     for bullet in worldstate.bullets[:]:
         if (
-            bullet.x < boss.x + boss.width and
-            bullet.x + bullet.width > boss.x and
-            bullet.y < boss.y + boss.height and
-            bullet.y + bullet.height > boss.y
+            bullet.x < worldstate.boss.x + worldstate.boss.width and
+            bullet.x + bullet.width > worldstate.boss.x and
+            bullet.y < worldstate.boss.y + worldstate.boss.height and
+            bullet.y + bullet.height > worldstate.boss.y
         ):
-            boss.health -= 1  # Decrease boss health
+            worldstate.boss.health -= 1  # Decrease boss health
             worldstate.bullets.remove(bullet)
 
 def display_menu(surface):
@@ -467,15 +473,8 @@ def draw_all_entities(worldstate):
 def spawn_boss(worldstate):
     worldstate.boss = Boss(SCREEN_WIDTH // 2 - 60, 50)  # Center the boss at the top
     base_health = worldstate.boss.health
-    worldstate.boss.health = base_health + worldstate.level
- 
-def update_boss(boss, worldstate):
-    boss.move()  # Move boss based on its behavior
-    if boss.y + boss.height >= PLAYER_HEIGHT:
-        worldstate.enemies.clear()  # Clear all enemies to stop the game
-        display_game_over(worldstate.screen)
-        # Restart the game
-        worldstate.__init__()  # Reset the world state
+    worldstate.boss.maxHP =  15 + (15 * worldstate.level)
+    worldstate.boss.health = copy.deepcopy(worldstate.boss.maxHP)
 
 def update_boss(worldstate):
         worldstate.boss.move()  # Move boss based on its behavior
@@ -486,10 +485,8 @@ def update_boss(worldstate):
             # Restart the game
             worldstate.__init__()  # Reset the world state
 
-        handle_collisions_boss(worldstate, worldstate.boss)
-
-        if worldstate.boss.health <= 0:  # Boss defeated
-            handle_new_level(worldstate)
+        handle_collisions_boss(worldstate)
+        dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
 
 def handle_new_level(worldstate):
     worldstate.objects = []
@@ -525,6 +522,38 @@ def update_objects(worldstate):
         except Exception as e:
             print(f"Error updating objects: {e}")
 
+def draw_enemy_bar(surface, total_enemies, remaining_enemies):
+    # Calculate the width of the filled portion of the bar based on remaining enemies
+    if total_enemies > 0:
+        fill_ratio = remaining_enemies / total_enemies
+    else:
+        fill_ratio = 0
+    filled_width = int(BAR_WIDTH * fill_ratio)
+    
+    # Draw the background of the bar
+    pygame.draw.rect(surface, RED, (BAR_X, BAR_Y, BAR_WIDTH, BAR_HEIGHT))
+    
+    # Draw the filled portion of the bar
+    pygame.draw.rect(surface, GREEN, (BAR_X, BAR_Y, filled_width, BAR_HEIGHT))
+
+def generate_stars(num_stars):
+    stars = []
+    for _ in range(num_stars):
+        x = random.randint(0, SCREEN_WIDTH)
+        y = random.randint(0, SCREEN_HEIGHT)
+        color = BLUE if random.choice([True, False]) else WHITE  # Randomly choose blue or white
+        radius = random.randint(1, 3)  # Random size for the star
+        stars.append((x, y, color, radius))
+    return stars
+
+# Draw stars on the screen
+def draw_stars(surface, stars):
+    for (x, y, color, radius) in stars:
+        pygame.draw.circle(surface, color, (x, y), radius)
+
+# Generate a list of stars to be used as background decoration
+background_stars = generate_stars(100)  # Number of stars
+
 def main():
     # Initialize level, dynamic functions, and level summary
     worldstate = WorldState()
@@ -537,6 +566,9 @@ def main():
 
     while running:
         worldstate.screen.fill(BLACK)
+
+        # Draw stars in the background
+        draw_stars(screen, background_stars)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -551,7 +583,6 @@ def main():
         handle_player_shooting(worldstate)
         update_bullets(worldstate)
         handle_cheats(worldstate)
-        update_enemies(worldstate)
         draw_all_entities(worldstate)
         draw_objects(worldstate)
         update_objects(worldstate)
@@ -559,6 +590,10 @@ def main():
 
         if worldstate.boss:
             update_boss(worldstate)
+            if worldstate.boss.health <= 0:  # Boss defeated
+                worldstate.boss = None
+                display_message(screen, f"Level {worldstate.level} Complete!\nNext Level!", duration=1)
+                worldstate.level += 1
         else:
             update_enemies(worldstate)
             handle_collisionsE(worldstate)
