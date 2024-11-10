@@ -477,7 +477,7 @@ def spawn_boss(worldstate):
 def update_boss(worldstate):
         worldstate.boss.move()  # Move boss based on its behavior
 
-        if worldstate.boss.y + worldstate.boss.height >= worldstate.player.y:
+        if worldstate.boss.y + worldstate.boss.height >= PLAYER_HEIGHT:
             worldstate.enemies.clear()  # Clear all enemies to stop the game
             display_game_over(worldstate.screen)
             # Restart the game
