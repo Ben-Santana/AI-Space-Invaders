@@ -53,6 +53,7 @@ You are an expert software engineer specializing in game development. Your task 
         - x, y coordinates
         - a draw function that takes in the object and a pygame screen and displays it on the screen
         - an update function that updates the object depending on what the function is
+    - DO NOT ADD A DICTIONARY AS AN OBJECT FOLLOW THE CLASS GIVEN AND USE ITS CONSTRUCTOR
     - Here is an example of an implementation of Objects:
     ```python 
         def add_meteor_shower(worldstate):  # Adds a meteor shower to increase difficulty

@@ -4,6 +4,8 @@ import copy
 import pygame
 import sys
 
+from real_time.manage_functions import prepare_next_level
+
 
 # from real_time.manage_functions import prepare_next_level
 
@@ -174,9 +176,9 @@ class Object:
         self.draw_function = draw_function
         self.update_function = update_function
     
-    def draw(self):
+    def draw(self, screen):
         try:
-            self.draw_function(self)
+            self.draw_function(self, screen)
         except Exception as e:
             pass
 
@@ -495,7 +497,7 @@ def handle_new_level(worldstate):
     worldstate.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
     display_message(worldstate.screen, f"Level {worldstate.level}\nComplete! Next Level!", duration=2)
     worldstate.level += 1
-    #dynamic_functions, level_summary = prepare_next_level(worldstate.level)  # Load new functions for the next level
+    dynamic_functions, level_summary = prepare_next_level(worldstate.level)  # Load new functions for the next level
 
     if worldstate.level <= 4:
         for enemy in worldstate.enemies:
@@ -511,10 +513,10 @@ def display_score(worldstate):
 
 def draw_objects(worldstate):
     for obj in worldstate.objects:
-        #try:
+        try:
             obj.draw(worldstate.screen)
-        #except Exception as e:
-        #    print(f"Error drawing objects: {e}")
+        except Exception as e:
+            print(f"Error drawing objects: {e}")
 
 def update_objects(worldstate):
     for obj in worldstate.objects:
@@ -531,7 +533,7 @@ def main():
     display_menu(worldstate.screen)
     running = True
 
-    #dynamic_functions, level_summary = prepare_next_level(worldstate.level)
+    dynamic_functions, level_summary = prepare_next_level(worldstate.level)
 
     while running:
         worldstate.screen.fill(BLACK)
@@ -551,6 +553,9 @@ def main():
         handle_cheats(worldstate)
         update_enemies(worldstate)
         draw_all_entities(worldstate)
+        draw_objects(worldstate)
+        update_objects(worldstate)
+        print(worldstate.objects)
 
         if worldstate.boss:
             update_boss(worldstate)
@@ -561,14 +566,14 @@ def main():
                 handle_new_level(worldstate)
 
         # YOUR FUNCTIONS WILL RUN HERE
-        # for func_name, func in dynamic_functions.items():
-        #     try:
-        #         func(worldstate)  # Execute each function, passing the game state
-        #     except Exception as e:
-        #         print(f"Error executing {func_name}: {e}")
+        for func_name, func in dynamic_functions.items():
+            try:
+                func(worldstate)  # Execute each function, passing the game state
+            except Exception as e:
+                print(f"Error executing {func_name}: {e}")
 
         display_score(worldstate)
-        #display_summary_message(worldstate.screen, level_summary)
+        display_summary_message(worldstate.screen, level_summary)
 
         pygame.display.flip()
         clock.tick(60)
