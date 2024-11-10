@@ -5,7 +5,7 @@ import pygame
 import sys
 
 
-# from real_time.manage_functions import prepare_next_level
+from real_time.manage_functions import prepare_next_level
 
 # Initialize Pygame
 pygame.init()
@@ -458,7 +458,7 @@ def main():
     bossCounter = 0
 
     # Load initial dynamic functions and summary for level 1
-    # dynamic_functions, level_summary = prepare_next_level(level)
+    dynamic_functions, level_summary = prepare_next_level(level)
 
     while running:
         screen.fill(BLACK)
@@ -487,14 +487,14 @@ def main():
                 boss = None
                 display_message(screen, f"Level {level} Complete!\nNext Level!", duration=1, height= 400)
                 level += 1
-                # dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
+                dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
         else:
             update_enemies(worldstate)
             handle_collisionsE(worldstate)
             if not worldstate.enemies:
                 display_message(screen, f"Level {level} Complete!\nNext Level!", duration=1, height=400)
                 level += 1
-                # dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
+                dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
                 worldstate.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
                 if level <= 4:
                     for enemy in worldstate.enemies:
@@ -504,11 +504,11 @@ def main():
                         enemy.speed += level / 2
 
         # Call dynamically loaded functions for this level
-        # for func_name, func in dynamic_functions.items():
-        #     try:
-        #         func(worldstate)  # Execute each function, passing the game state
-        #     except Exception as e:
-        #         print(f"Error executing {func_name}: {e}")
+        for func_name, func in dynamic_functions.items():
+            try:
+                func(worldstate)  # Execute each function, passing the game state
+            except Exception as e:
+                print(f"Error executing {func_name}: {e}")
 
         # Draw player, boss, enemies, and bullets
         worldstate.player.draw(screen)
@@ -528,7 +528,7 @@ def main():
 
 
         # Display the level summary
-        # display_summary_message(screen, level_summary)
+        display_summary_message(screen, level_summary)
 
         pygame.display.flip()
         clock.tick(60)
