@@ -129,6 +129,29 @@ class Enemy:
         pygame.draw.rect(surface, BLACK, (self.x + self.width // 2 - mouth_width // 2, self.y + 3 * self.height // 4, mouth_width, eye_size))
 
         
+class Obstacle:
+    # @params
+    #  - draw_function : a function that takes in screen and the obstacle and draws it
+    #  - update_function : a function that takes in the obstacle and updates it
+    
+    def __init__(self, x, y, draw_function, update_function):
+        self.x = x
+        self.y = y
+
+        self.draw_function = draw_function
+        self.update_function = update_function
+    
+    def draw(self):
+        try:
+            self.draw_function(self)
+        except Exception as e:
+            pass
+
+    def update(self):
+        try:
+            self.update_function(self)
+        except Exception as e:
+            pass      
 
 # Define the Bullet class
 class Bullet:
@@ -347,13 +370,13 @@ def main():
     # Display the menu before starting the game
     display_menu(screen)
     running = True
-    level = 1  # Initialize level
+
+    # Initialize level, dynamic functions, and level summary
+    level = 1
     worldstate = WorldState()
+    dynamic_functions, level_summary = prepare_next_level(level)
     boss = None
     bossCounter = 0
-
-    # Load initial dynamic functions and summary for level 1
-    dynamic_functions, level_summary = prepare_next_level(level)
 
     while running:
         screen.fill(BLACK)
@@ -366,7 +389,8 @@ def main():
         # Spawn the boss if it's a boss level
         if boss_level and boss is None:
             boss = Boss(SCREEN_WIDTH // 2 - 60, 50)  # Center the boss at the top
-            boss.health = 30 + (level // 3) * 10
+            base_health = boss.health
+            boss.health = base_health + bossCounter * 2
 
         # Handle player and bullet movements
         handle_player_movement(worldstate)
@@ -376,7 +400,7 @@ def main():
 
         # Handle boss or enemies
         if boss:
-            update_boss(boss, worldstate)
+            update_boss(boss)
             handle_collisions_boss(worldstate, boss)
             if boss.health <= 0:  # Boss defeated
                 boss = None
@@ -429,6 +453,7 @@ def main():
 
     pygame.quit()
     sys.exit()
+
 
 
 if __name__ == "__main__":
