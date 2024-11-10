@@ -33,7 +33,7 @@ class WorldState:
         self.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
         self.bullets = []
         self.score = 0
-
+        self.screen = screen
 # Define the Player class
 class Player:
     def __init__(self):

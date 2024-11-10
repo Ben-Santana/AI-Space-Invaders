@@ -42,3 +42,18 @@ def deploy_shield_over_player(worldstate):  # Deploys a temporary shield over th
 
 # Summary:
 # - Added deploy_shield_over_player: Activates a temporary shield above the player at a certain score.
+
+import pygame
+import random
+
+def create_shield(worldstate):  # Randomly creates shields for the player at the bottom of the screen
+    shield_width = 100
+    shield_height = 10
+    shield_y = SCREEN_HEIGHT - worldstate.player.height - 20
+    
+    if len(worldstate.shields) < 3:  # Limiting the number of active shields
+        shield_x = random.randint(0, SCREEN_WIDTH - shield_width)
+        worldstate.shields.append({'x': shield_x, 'y': shield_y, 'width': shield_width, 'height': shield_height})
+
+# Summary:
+# - Added create_shield: Creates defensive shields below the player for protection from enemy bullets.
