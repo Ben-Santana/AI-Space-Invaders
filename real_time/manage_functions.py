@@ -1,22 +1,16 @@
 import importlib
 import inspect
 import sys
-from llm.api_call import GPT
+from llm.generate_function import generate_function
 
 def add_function_for_level(level):
     """Requests a new function from GPT for a specific game level and appends it to dynamic.py."""
     print(f"Requesting new function for Level {level}...")
     
-    # 1. Construct the prompts based on the level and current game state
-    user_prompt = open("./llm/prompts/user_prompt.txt", "r").read() + f"\nAdd a unique gameplay mechanic for Level {level}."
-    system_prompt = open("./llm/prompts/system_prompt.txt", "r").read()
-
-    # 2. Request the function from GPT
-    gpt = GPT()
-    response = gpt.text_completion(user_prompt=user_prompt, system_prompt=system_prompt)
+    response = generate_function()
 
     # 3. Clean and format the response to extract function code
-    function_code = remove_code_block_markers(response)
+    function_code = response
 
     # 4. Append the function code to dynamic.py
     try:
@@ -44,7 +38,12 @@ def load_and_execute_functions(module_name="real_time.dynamic"):
         module = importlib.import_module(module_name)
         # Get all functions defined in the module
         functions = {name: func for name, func in inspect.getmembers(module, inspect.isfunction)}
-        print("Functions Loaded just now are: ", functions)
+        if functions:
+            # Get the last function in the dictionary
+            last_function_name = list(functions.keys())[-1]
+            last_function = functions[last_function_name]
+            print(f"Function Loaded just: {last_function_name}")
+            return {last_function_name: last_function}
         return functions
     except Exception as e:
         print(f"Error loading functions from dynamic.py: {e}")
@@ -62,28 +61,34 @@ def prepare_next_level(level):
     # Step 1: Request and add a new function for the level
     summary = add_function_for_level(level)
 
+    print("summary: " + summary)
+
     # Step 2: Load the functions from dynamic.py, including the newly added one
     functions = load_and_execute_functions()
+    func_name, func = list(functions.items())[-1]
+
+
 
     # Step 3: Return both the functions and the summary text for display
-    return functions, summary
-
-def remove_code_block_markers(text):
-    """Removes ```python and ``` markers from the given text."""
-    lines = text.split('\n')
-    cleaned_lines = [line for line in lines if line.strip() != '```python' and line.strip() != '```']
-    return '\n'.join(cleaned_lines)
+    return func, summary
 
 def extract_summary(response_text):
-    """Extracts the summary section from the GPT response to display in the game."""
+    """
+    Extracts the summary section from the response text to display in the game.
+    """
     summary_marker = "# Summary:"
     summary_text = ""
+    in_summary_section = False
+    
     for line in response_text.splitlines():
         if summary_marker in line:
+            # Start capturing summary after marker
             summary_text += line.replace(summary_marker, "").strip()
-        elif summary_text:
+            in_summary_section = True
+        elif in_summary_section:
             # Continue adding summary lines until a blank line or function definition
             if line.strip() == "" or line.startswith("def "):
                 break
             summary_text += " " + line.strip()
+    
     return summary_text.strip()
