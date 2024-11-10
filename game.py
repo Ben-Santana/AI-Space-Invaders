@@ -50,6 +50,7 @@ class Player:
         self.y = SCREEN_HEIGHT - self.height - 10
         self.speed = 8
         self.fastFire = False
+        self.nuke_available = True
 
     def draw(self, surface):
         pygame.draw.rect(surface, GREEN, (self.x, self.y, self.width, self.height))
@@ -133,7 +134,7 @@ class Boss:
 # Define the Enemy class
 class Enemy:
     def __init__(self, x, y):
-        self.width = 40
+        self.width = 55
         self.height = 40
         self.x = x
         self.y = y
@@ -287,7 +288,7 @@ def use_nuke(worldstate):
         worldstate.enemies.clear()
         worldstate.player.nuke_available = False  # Nuke can only be used once
         # Optional: Display a message to the player
-        display_message("NUKE Activated!\nAll Enemies Destroyed", duration=1, height=40)
+        display_message(worldstate.screen, "NUKE Activated!\nAll Enemies Destroyed", duration=1, height = 40)
 
 # Function to handle collisions
 def handle_collisionsE(worldstate):
@@ -304,30 +305,6 @@ def handle_collisionsE(worldstate):
                 worldstate.score += 10
                 break
 
-def display_message(surface, text, duration=2):
-    font = pygame.font.Font("nothing-font-5x7.ttf", 48)
-    
-    # Split text into multiple lines
-    lines = text.splitlines()
-    
-    # Calculate the vertical position for the first line to center the text block
-    total_height = len(lines) * font.get_height()
-    start_y = (SCREEN_HEIGHT // 2) - (total_height // 2)
-
-    for i, line in enumerate(lines):
-        # Render each line
-        message = font.render(line, True, WHITE)
-        
-        # Center each line horizontally and stack vertically
-        text_rect = message.get_rect(center=(SCREEN_WIDTH // 2, start_y + i * font.get_height()))
-        
-        # Display each line on the surface
-        surface.blit(message, text_rect)
-
-    pygame.display.flip()
-    
-    # Pause for a short duration (in seconds)
-    pygame.time.delay(duration * 1000)
 
 def display_message(surface, text, duration=2, height=None):
     font = pygame.font.Font("nothing-font-5x7.ttf", 48)
@@ -511,7 +488,7 @@ def update_boss(worldstate):
 
         if boss.health <= 0:  # Boss defeated
             boss = None
-            display_message(worldstate.screen, f"Level {level} Complete! Next Level!", duration=2)
+            display_message(worldstate.screen, f"Level {level} Complete!\nNext Level!", duration=2)
             level += 1
             #dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
 
@@ -519,7 +496,7 @@ def handle_new_level(worldstate):
     worldstate.objects = []
     worldstate.boss = None
     worldstate.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
-    display_message(worldstate.screen, f"Level {worldstate.level} Complete! Next Level!", duration=2)
+    display_message(worldstate.screen, f"Level {worldstate.level}\nComplete! Next Level!", duration=2)
     worldstate.level += 1
     #dynamic_functions, level_summary = prepare_next_level(worldstate.level)  # Load new functions for the next level
 
