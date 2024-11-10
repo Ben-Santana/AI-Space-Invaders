@@ -38,7 +38,7 @@ class WorldState:
 class Player:
     def __init__(self):
         self.width = 50
-        self.height = 30
+        self.height = 50
         self.x = SCREEN_WIDTH // 2 - self.width // 2
         self.y = SCREEN_HEIGHT - self.height - 10
         self.speed = 8
@@ -46,8 +46,25 @@ class Player:
 
     def draw(self, surface):
         pygame.draw.rect(surface, GREEN, (self.x, self.y, self.width, self.height))
-        pygame.draw.rect(surface, GREEN, (self.x, self.y,35,40))
-        pygame.draw.rect(surface, GREEN, (self.x, self.y,15,100))
+        # Bottom
+        pygame.draw.rect(surface, BLACK, (self.x + 5, (self.y + self.height) -5, 40,10))
+        pygame.draw.rect(surface, BLACK, (self.x + 10, (self.y + self.height) -10, 30,10))
+        # Left Side
+        pygame.draw.rect(surface, BLACK, (self.x, self.y, 5,self.height - 10))
+        pygame.draw.rect(surface, BLACK, (self.x + 5, self.y, 5,self.height - 15))
+        pygame.draw.rect(surface, BLACK, (self.x + 10, self.y, 5,self.height - 30))
+        pygame.draw.rect(surface, BLACK, (self.x + 15, self.y, 5,self.height - 40))
+
+        # Right Side
+        pygame.draw.rect(surface, BLACK, (self.x + self.width - 5, self.y, 5,self.height - 10))
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 10, self.y, 5,self.height - 15))
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 15, self.y, 5,self.height - 30))
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 20, self.y, 5,self.height - 40))
+
+        #Cockpit
+        pygame.draw.rect(surface, BLACK, ((self.x + 20, self.y + 10, 10,10)))
+        
+
 # Define the Boss Class
 class Boss:
     def __init__(self, x, y):
@@ -251,10 +268,24 @@ def handle_collisionsE(worldstate):
 
 def display_message(surface, text, duration=2):
     font = pygame.font.Font("nothing-font-5x7.ttf", 48)
-    message = font.render(text, True, WHITE)
-    text_rect = message.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
     
-    surface.blit(message, text_rect)
+    # Split text into multiple lines
+    lines = text.splitlines()
+    
+    # Calculate the vertical position for the first line to center the text block
+    total_height = len(lines) * font.get_height()
+    start_y = (SCREEN_HEIGHT // 2) - (total_height // 2)
+
+    for i, line in enumerate(lines):
+        # Render each line
+        message = font.render(line, True, WHITE)
+        
+        # Center each line horizontally and stack vertically
+        text_rect = message.get_rect(center=(SCREEN_WIDTH // 2, start_y + i * font.get_height()))
+        
+        # Display each line on the surface
+        surface.blit(message, text_rect)
+
     pygame.display.flip()
     
     # Pause for a short duration (in seconds)
@@ -404,14 +435,14 @@ def main():
             handle_collisions_boss(worldstate, boss)
             if boss.health <= 0:  # Boss defeated
                 boss = None
-                display_message(screen, f"Level {level} Complete! Next Level", duration=2)
+                display_message(screen, f"Level {level} Complete! Next Level!", duration=2)
                 level += 1
                 dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
         else:
             update_enemies(worldstate)
             handle_collisionsE(worldstate)
             if not worldstate.enemies:
-                display_message(screen, f"Level {level} Complete! Next Level", duration=2)
+                display_message(screen, f"Level {level} Complete! Next Level!", duration=2)
                 level += 1
                 dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
                 worldstate.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
