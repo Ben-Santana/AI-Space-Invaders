@@ -20,8 +20,10 @@ You are an expert software engineer specializing in game development. Your task 
 
    - Constants (read-only):
      - `SCREEN_WIDTH`, `SCREEN_HEIGHT`
-     - `worldstate.player.width`, `worldstate.player.height`
+     - `worldstate.player.width`
      - Enemy dimensions from any enemy in `worldstate.enemies`
+     - `worldstate.player.speed`
+     - `worldstate.score`
 
    - Global variables (modifiable):
      - Enemy attributes (e.g., `enemy.speed`, `enemy.direction` for any enemy in `worldstate.enemies`)
@@ -80,10 +82,10 @@ You are an expert software engineer specializing in game development. Your task 
    - Have all your code in one function
    - When you include comments, make sure each line begins with a `#`.
    - Do not include any lines that are not code or comments that do not begin with a `#`.
-   - Avoid introducing new objects based on random number generators in a way that could cause gameplay issues.
-   - If you instantiate new objects, ensure they stay within the screen boundaries.
-   - You can modify the speed or size of the player, enemies, or bullets.
+   - You shouldn't modify the speed or size of the player or enemies.
+   - Do not modify the y axis of the player
    - You can introduce power-ups, obstacles, or other forces that affect gameplay.
    - Feel free to explore other variations to enhance the game experience.
 
-Here is the code of the game file. Your code will be written to a seperate file that will have your functions that take in and return worldstate. Your functions will be run within the gameloop. Here is the main code:
+
+Here is the code of the game file. Your code will be written in a seperate file. Your functions will take in and return WorldState. Your functions will be called from within the gameloop. Here is the main code:

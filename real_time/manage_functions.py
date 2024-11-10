@@ -29,18 +29,31 @@ def add_function_for_level(level):
     summary = extract_summary(response)
     return summary
 
-def load_dynamic_functions():
-    """Reloads dynamic.py and returns a dictionary of callable functions."""
+def load_and_execute_functions(module_name="real_time.dynamic"):
+    """
+    Loads all functions from a specified file and returns them for execution in the game.
+    """
+    # Ensure the module is reloaded each time by removing it from sys.modules
+    if module_name in sys.modules:
+        del sys.modules[module_name]
+
     try:
-        import dynamic  # Import dynamic.py initially
-        importlib.reload(dynamic)  # Reloads dynamic to access the latest functions
-        # Retrieve all callable functions in dynamic.py
-        functions = {name: getattr(dynamic, name) for name in dir(dynamic) if callable(getattr(dynamic, name))}
-        print("Functions successfully loaded from dynamic.py")
+        # Dynamically import the module
+        module = importlib.import_module(module_name)
+        # Get all functions defined in the module
+        functions = {name: func for name, func in inspect.getmembers(module, inspect.isfunction)}
+        print("Functions Loaded just now are: ", functions)
         return functions
     except Exception as e:
         print(f"Error loading functions from dynamic.py: {e}")
         return {}
+
+    
+def reset_functions():
+    with open("./dynamic.py", 'w') as file:
+        file.write("""import pygame 
+                   from game import WorldState, Object, Player, Boss, Enemy, Bullet, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE, BLACK, GREEN, RED, clock
+                    """)
 
 def prepare_next_level(level):
     """Sets up and loads the new function for the next game level, including the summary."""
@@ -48,7 +61,7 @@ def prepare_next_level(level):
     summary = add_function_for_level(level)
 
     # Step 2: Load the functions from dynamic.py, including the newly added one
-    functions = load_dynamic_functions()
+    functions = load_and_execute_functions()
 
     # Step 3: Return both the functions and the summary text for display
     return functions, summary

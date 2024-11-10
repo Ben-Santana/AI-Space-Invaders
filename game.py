@@ -13,6 +13,7 @@ pygame.init()
 # Screen dimensions
 SCREEN_WIDTH = 640
 SCREEN_HEIGHT = 550
+PLAYER_HEIGHT = SCREEN_HEIGHT - 60
 
 # Colors
 WHITE = (255, 255, 255)
@@ -55,30 +56,29 @@ class Player:
         self.width = 50
         self.height = 50
         self.x = SCREEN_WIDTH // 2 - self.width // 2
-        self.y = (SCREEN_HEIGHT- 50) - self.height - 10
         self.speed = 8
         self.fastFire = False
         self.nuke_available = True
 
     def draw(self, surface):
-        pygame.draw.rect(surface, GREEN, (self.x, self.y, self.width, self.height))
+        pygame.draw.rect(surface, GREEN, (self.x, PLAYER_HEIGHT, self.width, self.height))
         # Bottom
-        pygame.draw.rect(surface, BLACK, (self.x + 5, (self.y + self.height) -5, 40,10))
-        pygame.draw.rect(surface, BLACK, (self.x + 10, (self.y + self.height) -10, 30,10))
+        pygame.draw.rect(surface, BLACK, (self.x + 5, (PLAYER_HEIGHT + self.height) -5, 40,10))
+        pygame.draw.rect(surface, BLACK, (self.x + 10, (PLAYER_HEIGHT + self.height) -10, 30,10))
         # Left Side
-        pygame.draw.rect(surface, BLACK, (self.x, self.y, 5,self.height - 10))
-        pygame.draw.rect(surface, BLACK, (self.x + 5, self.y, 5,self.height - 15))
-        pygame.draw.rect(surface, BLACK, (self.x + 10, self.y, 5,self.height - 30))
-        pygame.draw.rect(surface, BLACK, (self.x + 15, self.y, 5,self.height - 40))
+        pygame.draw.rect(surface, BLACK, (self.x, PLAYER_HEIGHT, 5,self.height - 10))
+        pygame.draw.rect(surface, BLACK, (self.x + 5, PLAYER_HEIGHT, 5,self.height - 15))
+        pygame.draw.rect(surface, BLACK, (self.x + 10, PLAYER_HEIGHT, 5,self.height - 30))
+        pygame.draw.rect(surface, BLACK, (self.x + 15, PLAYER_HEIGHT, 5,self.height - 40))
 
         # Right Side
-        pygame.draw.rect(surface, BLACK, (self.x + self.width - 5, self.y, 5,self.height - 10))
-        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 10, self.y, 5,self.height - 15))
-        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 15, self.y, 5,self.height - 30))
-        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 20, self.y, 5,self.height - 40))
+        pygame.draw.rect(surface, BLACK, (self.x + self.width - 5, PLAYER_HEIGHT, 5,self.height - 10))
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 10, PLAYER_HEIGHT, 5,self.height - 15))
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 15, PLAYER_HEIGHT, 5,self.height - 30))
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 20, PLAYER_HEIGHT, 5,self.height - 40))
 
         #Cockpit
-        pygame.draw.rect(surface, BLACK, ((self.x + 20, self.y + 10, 10,10)))
+        pygame.draw.rect(surface, BLACK, ((self.x + 20, PLAYER_HEIGHT + 10, 10,10)))
         
 class Boss:
     def __init__(self, x, y):
@@ -233,11 +233,11 @@ def handle_player_shooting(worldstate):
     if keys[pygame.K_SPACE]:
         # Limit to one bullet on screen
         if(worldstate.player.fastFire):
-            bullet = Bullet(worldstate.player.x + worldstate.player.width // 2, worldstate.player.y, -10)
+            bullet = Bullet(worldstate.player.x + worldstate.player.width // 2, PLAYER_HEIGHT, -10)
             worldstate.bullets.append(bullet)
         else:
             if not any(bullet.dy < 0 for bullet in worldstate.bullets):
-                bullet = Bullet(worldstate.player.x + worldstate.player.width // 2, worldstate.player.y, -10)
+                bullet = Bullet(worldstate.player.x + worldstate.player.width // 2, PLAYER_HEIGHT, -10)
                 worldstate.bullets.append(bullet)
 
 # Gives Cheat 
@@ -279,7 +279,7 @@ def update_enemies(worldstate):
             enemy.y += 10
         
         # Check if any enemy reaches the bottom of the screen
-        if enemy.y + enemy.height >= worldstate.player.y:
+        if enemy.y + enemy.height >= PLAYER_HEIGHT:
             worldstate.enemies.clear()  # Clear all enemies to stop the game
             display_game_over(worldstate.screen)
             # Restart the game
