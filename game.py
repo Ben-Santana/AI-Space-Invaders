@@ -11,8 +11,8 @@ import sys
 pygame.init()
 
 # Screen dimensions
-SCREEN_WIDTH = 600
-SCREEN_HEIGHT = 500
+SCREEN_WIDTH = 620
+SCREEN_HEIGHT = 550
 
 # Colors
 WHITE = (255, 255, 255)
@@ -47,7 +47,7 @@ class Player:
         self.width = 50
         self.height = 50
         self.x = SCREEN_WIDTH // 2 - self.width // 2
-        self.y = SCREEN_HEIGHT - self.height - 10
+        self.y = (SCREEN_HEIGHT- 50) - self.height - 10
         self.speed = 8
         self.fastFire = False
         self.nuke_available = True
@@ -124,7 +124,7 @@ class Boss:
 
     def move(self):
         # Boss bounces left and right and moves down slowly
-        if self.x <= 0 or self.x + self.width >= SCREEN_WIDTH:
+        if self.x <= 0 or self.x + self.width >= SCREEN_WIDTH - 10:
             self.direction *= -1
         self.x += self.speed * self.direction
         if random.randint(1, 100) > 98:  # Small chance to move down
@@ -206,9 +206,9 @@ class Bullet:
 # Function to handle player movement
 def handle_player_movement(worldstate):
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT] and worldstate.player.x > 0:
+    if keys[pygame.K_LEFT] and worldstate.player.x > 10:
         worldstate.player.x -= worldstate.player.speed
-    if keys[pygame.K_RIGHT] and worldstate.player.x < SCREEN_WIDTH - worldstate.player.width:
+    if keys[pygame.K_RIGHT] and worldstate.player.x < SCREEN_WIDTH - worldstate.player.width - 10:
         worldstate.player.x += worldstate.player.speed
     if keys[pygame.K_SPACE]:
         handle_player_shooting(worldstate)
@@ -260,7 +260,7 @@ def update_enemies(worldstate):
     # Check if the entire group hits the wall
     move_down = False
     change_direction = False
-    if rightmost >= SCREEN_WIDTH or leftmost <= 0:
+    if rightmost >= SCREEN_WIDTH - 10 or leftmost <= 10:
         change_direction = True
         move_down = True
 
