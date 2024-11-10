@@ -1,9 +1,9 @@
-from api_call import GPT
+from llm.api_call import GPT
 
 def generate_function():
     gpt = GPT()
-    user_prompt = open(f"./prompts/user_prompt.txt", "r").read() + open(f"../real-time/dynamic.py", "r").read()
-    system_prompt = open(f"./prompts/system_prompt.txt", "r").read() + open(f"../game.py", "r").read()
+    user_prompt = open(f"./llm/prompts/user_prompt.txt", "r").read() + open(f"./real_time/dynamic.py", "r").read()
+    system_prompt = open(f"./llm/prompts/system_prompt.txt", "r").read() + open(f"./game.py", "r").read()
 
     # generate response
     response = gpt.text_completion(user_prompt=user_prompt, system_prompt=system_prompt)

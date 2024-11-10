@@ -4,6 +4,8 @@ import copy
 import pygame
 import sys
 
+from real_time.manage_functions import prepare_next_level
+
 
 from real_time.manage_functions import prepare_next_level
 
@@ -53,6 +55,9 @@ class WorldState:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.level = 1
         self.boss_frequency = 3
+        self.gameOver = False
+        self.dynamic_function, self.level_summary = prepare_next_level(1)
+
 
 # Define the Player class
 class Player:
@@ -184,9 +189,9 @@ class Object:
         self.draw_function = draw_function
         self.update_function = update_function
     
-    def draw(self):
+    def draw(self, screen):
         try:
-            self.draw_function(self)
+            self.draw_function(self, screen)
         except Exception as e:
             pass
 
@@ -212,7 +217,6 @@ class Bullet:
         pygame.draw.rect(surface, ORANGE, (self.x - 1.5, self.y -6.5, 8, 6.5))
         pygame.draw.rect(surface, RED, (self.x + 1.5, self.y + self.height, 2, 10))
         
-
 # Function to handle player movement
 def handle_player_movement(worldstate):
     keys = pygame.key.get_pressed()
@@ -226,8 +230,6 @@ def handle_player_movement(worldstate):
         handle_cheats(worldstate)
     if keys[pygame.K_n]:  # Use the N key for the nuke
         use_nuke(worldstate)
-
-
 
 # Function to handle shooting
 def handle_player_shooting(worldstate):
@@ -282,10 +284,7 @@ def update_enemies(worldstate):
         
         # Check if any enemy reaches the bottom of the screen
         if enemy.y + enemy.height >= PLAYER_HEIGHT:
-            worldstate.enemies.clear()  # Clear all enemies to stop the game
-            display_game_over(worldstate.screen)
-            # Restart the game
-            worldstate.__init__()  # Reset the world state
+            worldstate.gameOver = True
             break
 
 
@@ -294,7 +293,7 @@ def use_nuke(worldstate):
     if worldstate.player.nuke_available:
         # Clear all enemies from the game
         worldstate.enemies.clear()
-        worldstate.player.nuke_available = False  # Nuke can only be used once
+        #worldstate.player.nuke_available = False  # Nuke can only be used once
         # Optional: Display a message to the player
         display_message(worldstate.screen, "NUKE Activated!\nAll Enemies Destroyed", duration=1, height = 40)
 
@@ -345,23 +344,19 @@ def display_message(surface, text, duration=2, height=None):
     # Pause for a short duration (in seconds)
     pygame.time.delay(duration * 1000)
 
-global level
-level = 1  # Initialize level globally
-
-def display_game_over(surface):
+def display_game_over(worldstate):
     global level  # Ensure level reset happens only here
     font = pygame.font.Font("nothing-font-5x7.ttf", 48)
     game_over_text = font.render("Game Over!", True, WHITE)
     restart_text = font.render("Press SPACE to Restart", True, WHITE)
     
-    # Reset level to 1 only when the game is truly over
-    level = 1
+    worldstate.__init__()
 
     game_over_rect = game_over_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 30))
     restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 30))
 
-    surface.blit(game_over_text, game_over_rect)
-    surface.blit(restart_text, restart_rect)
+    worldstate.screen.blit(game_over_text, game_over_rect)
+    worldstate.screen.blit(restart_text, restart_rect)
     pygame.display.flip()
 
     # Wait for the player to press the space bar to restart
@@ -373,12 +368,13 @@ def display_game_over(surface):
                 sys.exit()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 waiting = False
+                worldstate.gameOver = False
 
 def update_boss(boss, worldstate):
     boss.move()  # Move boss based on its behavior
     if boss.y + boss.height >= worldstate.player.y:
         worldstate.enemies.clear()  # Clear all enemies to stop the game
-        display_game_over(worldstate.screen)
+        display_game_over(worldstate)
         # Restart the game
         worldstate.__init__()  # Reset the world state
 
@@ -521,12 +517,11 @@ def update_boss(worldstate):
 
         if worldstate.boss.y + worldstate.boss.height >= PLAYER_HEIGHT:
             worldstate.enemies.clear()  # Clear all enemies to stop the game
-            display_game_over(worldstate.screen)
+            display_game_over(worldstate)
             # Restart the game
             worldstate.__init__()  # Reset the world state
 
-        handle_collisions_boss(worldstate)
-        dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
+        handle_collisions_boss(worldstate)  # Load new functions for the next level
 
 def handle_new_level(worldstate):
     worldstate.objects = []
@@ -534,7 +529,7 @@ def handle_new_level(worldstate):
     worldstate.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
     display_message(worldstate.screen, f"Level {worldstate.level}\nComplete! Next Level!", duration=2)
     worldstate.level += 1
-    dynamic_functions, level_summary = prepare_next_level(worldstate.level)  # Load new functions for the next level
+    worldstate.dynamic_function, worldstate.level_summary = prepare_next_level(worldstate.level)  # Load new functions for the next level
 
     if worldstate.level <= 4:
         for enemy in worldstate.enemies:
@@ -550,15 +545,17 @@ def display_score(worldstate):
 
 def draw_objects(worldstate):
     for obj in worldstate.objects:
-        #try:
+        try:
             obj.draw(worldstate.screen)
-        #except Exception as e:
-        #    print(f"Error drawing objects: {e}")
+        except Exception as e:
+            print(f"Error drawing objects: {e}")
 
 def update_objects(worldstate):
+    counter = 0
     for obj in worldstate.objects:
         try:
             obj.update()
+            counter += 1
         except Exception as e:
             print(f"Error updating objects: {e}")
 
@@ -591,20 +588,19 @@ def draw_stars(surface, stars):
     for (x, y, color, radius) in stars:
         pygame.draw.circle(surface, color, (x, y), radius)
 
-# Generate a list of stars to be used as background decoration
-background_stars = generate_stars(100)  # Number of stars
 
 def main():
     global player_skin
     # Initialize level, dynamic functions, and level summary
     worldstate = WorldState()
 
+    # Generate a list of stars to be used as background decoration
+    background_stars = generate_stars(100)  # Number of stars
+
     # Display the menu before starting the game
     display_menu(worldstate.screen)
     running = True
     worldstate.player.color = player_skin
-
-    dynamic_functions, level_summary = prepare_next_level(worldstate.level)
 
     while running:
         worldstate.screen.fill(BLACK)
@@ -626,28 +622,34 @@ def main():
         update_bullets(worldstate)
         handle_cheats(worldstate)
         draw_all_entities(worldstate)
+        draw_objects(worldstate)
+        update_objects(worldstate)
 
         if worldstate.boss:
+            draw_enemy_bar(worldstate.screen, worldstate.boss.maxHP, worldstate.boss.health)
             update_boss(worldstate)
             if worldstate.boss.health <= 0:  # Boss defeated
                 worldstate.boss = None
                 display_message(screen, f"Level {worldstate.level} Complete!\nNext Level!", duration=1)
                 worldstate.level += 1
         else:
+            draw_enemy_bar(worldstate.screen, 24, len(worldstate.enemies))
             update_enemies(worldstate)
             handle_collisionsE(worldstate)
             if not worldstate.enemies:
                 handle_new_level(worldstate)
 
-        # AI functions will run here
-        for func_name, func in dynamic_functions.items():
-            try:
-                func(worldstate)  # Execute each function, passing the game state
-            except Exception as e:
-                print(f"Error executing {func_name}: {e}")
+        # YOUR FUNCTION WILL RUN HERE
+        try:
+            worldstate.dynamic_function(worldstate)  # Execute function, passing the game state
+        except Exception as e:
+            print(f"Error executing {worldstate.dynamic_function}: {e}")
 
         display_score(worldstate)
-        display_summary_message(worldstate.screen, level_summary)
+        display_summary_message(worldstate.screen, worldstate.level_summary)
+
+        if worldstate.gameOver:
+            display_game_over(worldstate)
 
         pygame.display.flip()
         clock.tick(60)
