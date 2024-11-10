@@ -23,12 +23,16 @@ RED = (255, 0, 0)
 PURPLE = (200, 0, 255)
 ORANGE = (255, 200, 0)
 BLUE = (0, 0, 255)
+TEAL = (0, 255, 255)
 
 # Bar properties
 BAR_WIDTH = SCREEN_WIDTH - 40
 BAR_HEIGHT = 15
 BAR_X = 20
 BAR_Y = SCREEN_HEIGHT - 5
+
+# Colors for skins
+PLAYER_SKINS = [GREEN, BLUE, ORANGE, TEAL]  # Define more colors as needed
 
 # Set up the display
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -52,16 +56,18 @@ class WorldState:
 
 # Define the Player class
 class Player:
-    def __init__(self):
+    def __init__(self, color=GREEN):
         self.width = 50
         self.height = 50
         self.x = SCREEN_WIDTH // 2 - self.width // 2
+    
         self.speed = 8
         self.fastFire = False
         self.nuke_available = True
+        self.color = color  # Add color attribute for the skin
 
     def draw(self, surface):
-        pygame.draw.rect(surface, GREEN, (self.x, PLAYER_HEIGHT, self.width, self.height))
+        pygame.draw.rect(surface, self.color, (self.x, PLAYER_HEIGHT, self.width, self.height))  # Use the selected color for the skin
         # Bottom
         pygame.draw.rect(surface, BLACK, (self.x + 5, (PLAYER_HEIGHT + self.height) -5, 40,10))
         pygame.draw.rect(surface, BLACK, (self.x + 10, (PLAYER_HEIGHT + self.height) -10, 30,10))
@@ -82,8 +88,8 @@ class Player:
         
 class Boss:
     def __init__(self, x, y):
-        self.width = 120
-        self.height = 90
+        self.width = 200
+        self.height = 75
         self.x = x
         self.y = y
         self.maxHP = 30
@@ -92,8 +98,30 @@ class Boss:
         self.direction = 1  # 1 for right, -1 for left
 
     def draw(self, surface):
-        # Draw the boss sprite
-        pygame.draw.rect(surface, RED, (self.x, self.y, self.width, self.height))
+        # Draw the main body in a retro, pixelated shape
+        pygame.draw.rect(surface, PURPLE, (self.x + 20, self.y, self.width - 40, self.height // 3))  # Top section
+        pygame.draw.rect(surface, PURPLE, (self.x, self.y + self.height // 3, self.width, self.height // 3))  # Middle section
+        pygame.draw.rect(surface, PURPLE, (self.x + 40, self.y + 2 * self.height // 3, self.width - 80, self.height // 3))  # Bottom section
+
+        # Create a symmetrical staircase effect at the bottom
+        step_height = 20
+        step_width = 10
+        num_steps = 5  # Number of steps on each side
+
+        # Left side staircase
+        for i in range(num_steps):
+            pygame.draw.rect(
+                surface, PURPLE,
+                (self.x + i * step_width, self.y + self.height - (i + 1) * step_height, step_width, step_height)
+            )
+
+        # Right side staircase
+        for i in range(num_steps):
+            pygame.draw.rect(
+                surface, PURPLE,
+                (self.x + self.width - (i + 1) * step_width, self.y + self.height - (i + 1) * step_height, step_width, step_height)
+            )
+
         # Eyes (small black squares)
         eye_size = 30
         # Left eye
@@ -101,34 +129,7 @@ class Boss:
         # Right eye
         pygame.draw.rect(surface, BLACK, (self.x + 3 * self.width // 4 - eye_size // 2, self.y + self.height // 4, eye_size, eye_size))
 
-        # Mouth (larger black square)
-        mouth_width = 60
-        mouth_height = 20
-        mouth_x = self.x + self.width // 2 - mouth_width // 2
-        mouth_y = self.y + 3 * self.height // 4
-
-        # Draw the mouth outline
-        pygame.draw.rect(surface, BLACK, (mouth_x, mouth_y, mouth_width, mouth_height))
-
-        # Draw sharp teeth
-        num_teeth = 5
-        tooth_width = mouth_width // num_teeth
-        tooth_height = mouth_height
-
-        for i in range(num_teeth):
-            # Each tooth is a triangle
-            tooth_x = mouth_x + i * tooth_width
-            pygame.draw.polygon(surface, WHITE, [
-                (tooth_x, mouth_y),  # Top point of the triangle
-                (tooth_x + tooth_width // 2, mouth_y + tooth_height),  # Bottom middle point
-                (tooth_x + tooth_width, mouth_y)  # Top right point of the triangle
-            ])
-
-        # Display the health percentage above the boss sprite
-        health_percentage = (self.health / self.maxHP) * 100
-        font = pygame.font.Font(None, 30)  # Font for displaying the percentage
-        health_text = font.render(f"{int(health_percentage)}%", True, WHITE)
-        surface.blit(health_text, (self.x + self.width // 2 - health_text.get_width() // 2, self.y - 20))
+        
 
     def move(self):
         # Boss bounces left and right and moves down slowly
@@ -137,6 +138,7 @@ class Boss:
         self.x += self.speed * self.direction
         if random.randint(1, 100) > 98:  # Small chance to move down
             self.y += 10
+
 
 
 # Define the Enemy class
@@ -391,11 +393,11 @@ def handle_collisions_boss(worldstate):
             worldstate.boss.health -= 1  # Decrease boss health
             worldstate.bullets.remove(bullet)
 
+# Function to display the main menu with a skin change option
 def display_menu(surface):
     global level
     font = pygame.font.Font("nothing-font-5x7.ttf", 48)
-    menu_options = ["Start Game", "Quit "]
-    level = 1
+    menu_options = ["Start Game", "Choose Color", "Quit"]
     selected_option = 0
 
     while True:
@@ -403,11 +405,7 @@ def display_menu(surface):
 
         # Render menu options
         for i, option in enumerate(menu_options):
-            if i == selected_option:
-                color = (0, 255, 0)  # Highlight selected option in green
-            else:
-                color = WHITE
-
+            color = (0, 255, 0) if i == selected_option else WHITE
             text = font.render(option, True, color)
             text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + i * 50))
             surface.blit(text, text_rect)
@@ -425,13 +423,57 @@ def display_menu(surface):
                 elif event.key == pygame.K_DOWN:
                     selected_option = (selected_option + 1) % len(menu_options)
                 elif event.key == pygame.K_RETURN:
-                    # If "Start Game" is selected
                     if selected_option == 0:
-                        return  # Exit the menu and start the game
-                    # If "Quit" is selected
+                        return  # Start the game
                     elif selected_option == 1:
+                        display_skin_menu(surface)  # Open the skin selection menu
+                    elif selected_option == 2:
                         pygame.quit()
                         sys.exit()
+
+# Function to display the skin selection menu
+def display_skin_menu(surface):
+    global PLAYER_SKINS
+    font = pygame.font.Font("nothing-font-5x7.ttf", 48)
+    selected_skin = 0
+
+    while True:
+        surface.fill(BLACK)
+
+        # Render skin options
+        for i, color in enumerate(PLAYER_SKINS):
+            skin_text = font.render("StarShip " + str(i+1), True, color)
+            text_rect = skin_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + i * 50))
+            surface.blit(skin_text, text_rect)
+            if i == selected_skin:
+                # Highlight selected skin
+                pygame.draw.rect(surface, WHITE, text_rect.inflate(10, 10), 2)
+
+        pygame.display.flip()
+
+        # Handle skin menu input
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    selected_skin = (selected_skin - 1) % len(PLAYER_SKINS)
+                elif event.key == pygame.K_DOWN:
+                    selected_skin = (selected_skin + 1) % len(PLAYER_SKINS)
+                elif event.key == pygame.K_RETURN:
+                    # Set the chosen color as the player's skin
+                    selected_color = PLAYER_SKINS[selected_skin]
+                    set_player_skin(selected_color)
+                    return  # Return to the main menu
+
+# Function to set the player's skin color
+def set_player_skin(color):
+    global player_skin
+    player_skin = color  # Store the selected skin color globally
+
+# Initialize player skin color
+player_skin = GREEN  # Default color
 
 def display_summary_message(surface, summary_text):
     """Displays the summary of the new level at the bottom of the screen."""
@@ -553,12 +595,14 @@ def draw_stars(surface, stars):
 background_stars = generate_stars(100)  # Number of stars
 
 def main():
+    global player_skin
     # Initialize level, dynamic functions, and level summary
     worldstate = WorldState()
 
     # Display the menu before starting the game
     display_menu(worldstate.screen)
     running = True
+    worldstate.player.color = player_skin
 
     dynamic_functions, level_summary = prepare_next_level(worldstate.level)
 
