@@ -46,7 +46,7 @@ You are an expert software engineer specializing in game development. Your task 
 
      ```python
      # Summary:
-     # - Added function_name: Brief description of what the function does.
+     # - Brief description of what the function does.
      ```
 6. Adding Objects:
     - The object class is an array stored on the worldstate of generic objects. It is cleared every level
