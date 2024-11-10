@@ -94,7 +94,7 @@ class Player:
 class Boss:
     def __init__(self, x, y):
         self.width = 200
-        self.height = 75
+        self.height = 60
         self.x = x
         self.y = y
         self.maxHP = 30
@@ -104,36 +104,34 @@ class Boss:
 
     def draw(self, surface):
         # Draw the main body in a retro, pixelated shape
-        pygame.draw.rect(surface, PURPLE, (self.x + 20, self.y, self.width - 40, self.height // 3))  # Top section
-        pygame.draw.rect(surface, PURPLE, (self.x, self.y + self.height // 3, self.width, self.height // 3))  # Middle section
-        pygame.draw.rect(surface, PURPLE, (self.x + 40, self.y + 2 * self.height // 3, self.width - 80, self.height // 3))  # Bottom section
+        pygame.draw.rect(surface, PURPLE, (self.x, self.y, self.width, self.height))  # Body
 
-        # Create a symmetrical staircase effect at the bottom
-        step_height = 20
-        step_width = 10
-        num_steps = 5  # Number of steps on each side
+        # Left Side
+        pygame.draw.rect(surface, BLACK, (self.x, self.y, 50, 5))
+        pygame.draw.rect(surface, BLACK, (self.x, self.y, 40, 10))
+        pygame.draw.rect(surface, BLACK, (self.x, self.y + 10, 25, 10))
+        pygame.draw.rect(surface, BLACK, (self.x, self.y + 20, 10, 10))
+        pygame.draw.rect(surface, BLACK, (self.x, self.y + 40, 10, 10))
+        pygame.draw.rect(surface, BLACK, (self.x, self.y + 50, 20, 10))
+        pygame.draw.rect(surface, BLACK, (self.x + 30, self.y + 50, 40, 10))
+        pygame.draw.rect(surface, BLACK, (self.x + 40, self.y + 45, 20, 10))
+        pygame.draw.rect(surface, BLACK, (self.x + 30, self.y + 55, 50, 5))
+        # Left Windows
+        pygame.draw.rect(surface, BLACK, (self.x + 50, self.y + 20, 15, 15))
+        pygame.draw.rect(surface, BLACK, (self.x + 92.5, self.y + 20, 15, 15))
 
-        # Left side staircase
-        for i in range(num_steps):
-            pygame.draw.rect(
-                surface, PURPLE,
-                (self.x + i * step_width, self.y + self.height - (i + 1) * step_height, step_width, step_height)
-            )
-
-        # Right side staircase
-        for i in range(num_steps):
-            pygame.draw.rect(
-                surface, PURPLE,
-                (self.x + self.width - (i + 1) * step_width, self.y + self.height - (i + 1) * step_height, step_width, step_height)
-            )
-
-        # Eyes (small black squares)
-        eye_size = 30
-        # Left eye
-        pygame.draw.rect(surface, BLACK, (self.x + self.width // 4 - eye_size // 2, self.y + self.height // 4, eye_size, eye_size))
-        # Right eye
-        pygame.draw.rect(surface, BLACK, (self.x + 3 * self.width // 4 - eye_size // 2, self.y + self.height // 4, eye_size, eye_size))
-
+        # Right Side
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 50, self.y, 50, 5))
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 40, self.y, 40, 10))
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 25, self.y + 10, 25, 10))
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 10, self.y + 20, 10, 10))
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 10, self.y + 40, 10, 10))
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 20, self.y + 50, 20, 10))
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 70, self.y + 50, 40, 10))
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 60, self.y + 45, 20, 10))
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 80, self.y + 55, 30, 5))
+        # Right Windows
+        pygame.draw.rect(surface, BLACK, ((self.x + self.width) - 65, self.y + 20, 15, 15))
         
 
     def move(self):

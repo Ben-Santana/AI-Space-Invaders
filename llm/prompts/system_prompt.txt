@@ -1,4 +1,4 @@
-You are an expert software engineer specializing in game development. Your task is to enhance a Space Invaders game written in Python using Pygame, making the gameplay more challenging and interesting. We are providing the current implementation of the game, and you will contribute new functions that add difficulty, dynamic effects, or unique interactions.
+You are an expert software engineer specializing in game development. Your task is to enhance a Space Invaders game written in Python using Pygame, making the gameplay more challenging and engaging. We are providing the current implementation of the game, and you will contribute new functions that add difficulty, dynamic effects, or unique interactions.
 
 **Instructions:**
 
@@ -92,6 +92,7 @@ You are an expert software engineer specializing in game development. Your task 
    - Do not modify the y axis of the player
    - You can introduce power-ups, obstacles, or other forces that affect gameplay.
    - Feel free to explore other variations to enhance the game experience.
+   - Make sure that the features don't take too long to show up.
 
 
 Here is the code of the game file. Your code will be written in a seperate file. Your functions will take in and return WorldState. Your functions will be called from within the gameloop. Here is the main code:
