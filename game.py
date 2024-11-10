@@ -156,9 +156,9 @@ class Object:
         self.draw_function = draw_function
         self.update_function = update_function
     
-    def draw(self):
+    def draw(self, screen):
         try:
-            self.draw_function(self)
+            self.draw_function(self, screen)
         except Exception as e:
             pass
 
@@ -420,7 +420,8 @@ def update_boss(worldstate):
             dynamic_functions, level_summary = prepare_next_level(level)  # Load new functions for the next level
 
 def handle_new_level(worldstate):
-    boss = None
+    worldstate.objects = []
+    worldstate.boss = None
     worldstate.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
     display_message(worldstate.screen, f"Level {worldstate.level} Complete! Next Level!", duration=2)
     worldstate.level += 1
@@ -437,6 +438,20 @@ def display_score(worldstate):
     font = pygame.font.Font("nothing-font-5x7.ttf", 36)
     score_text = font.render(f"Score: {worldstate.score}", True, WHITE)
     worldstate.screen.blit(score_text, (10, 10))
+
+def draw_objects(worldstate):
+    for obj in worldstate.objects:
+        #try:
+            obj.draw(worldstate.screen)
+        #except Exception as e:
+        #    print(f"Error drawing objects: {e}")
+
+def update_objects(worldstate):
+    for obj in worldstate.objects:
+        try:
+            obj.update()
+        except Exception as e:
+            print(f"Error updating objects: {e}")
 
 def main():
     # Initialize level, dynamic functions, and level summary
@@ -466,6 +481,8 @@ def main():
         handle_cheats(worldstate)
         update_enemies(worldstate)
         draw_all_entities(worldstate)
+        draw_objects(worldstate)
+        update_objects(worldstate)
 
         if worldstate.boss:
             update_boss(worldstate)
