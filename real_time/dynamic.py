@@ -5,209 +5,252 @@ import random
 sys.path.append('../')
 from game import WorldState, Object, Player, Boss, Enemy, Bullet, SCREEN_WIDTH, SCREEN_HEIGHT, clock, PLAYER_HEIGHT, BLACK, WHITE, BLUE, ORANGE, PURPLE, RED, GREEN
 
-def create_random_portals(worldstate):  # Introduces portals that teleport the player
-    if len(worldstate.objects) == 0 and random.randint(0, 1000) < 5:  # 0.5% chance to spawn portals
-        portal_x = [random.randint(20, SCREEN_WIDTH - 70) for _ in range(2)]  # Two portals at random positions
 
-        def draw_portal1(obj, screen):
-            pygame.draw.ellipse(screen, BLUE, (obj.x, obj.y, 40, 60))
-            pygame.draw.ellipse(screen, ORANGE, (obj.x + 10, obj.y + 10, 20, 40))
-
-        def draw_portal2(obj, screen):
-            pygame.draw.ellipse(screen, BLUE, (obj.x, obj.y, 40, 60))
-            pygame.draw.ellipse(screen, PURPLE, (obj.x + 10, obj.y + 10, 20, 40))
-
-        def update_portal1(obj):
-            if pygame.Rect(obj.x, obj.y, 40, 60).colliderect(worldstate.player.x, PLAYER_HEIGHT, worldstate.player.width, worldstate.player.height):
-                worldstate.player.x = portal_x[1]  # Teleport player to second portal when entering first
-                worldstate.objects.clear()  # Remove portals after use
-
-        def update_portal2(obj):
-            if pygame.Rect(obj.x, obj.y, 40, 60).colliderect(worldstate.player.x, PLAYER_HEIGHT, worldstate.player.width, worldstate.player.height):
-                worldstate.player.x = portal_x[0]  # Teleport player to first portal when entering second
-                worldstate.objects.clear()  # Remove portals after use
-
-        # Create and append two portal objects
-        worldstate.objects.append(Object(portal_x[0], PLAYER_HEIGHT, draw_portal1, update_portal1))
-        worldstate.objects.append(Object(portal_x[1], PLAYER_HEIGHT, draw_portal2, update_portal2))
-
-# Summary:
-# - Added create_random_portals: Introduces a pair of portals that the player can use to teleport.
-
-def add_homing_missiles(worldstate):  # Adds enemy homing missiles for increased difficulty
-    if random.randint(0, 1000) < 5:  # 0.5% chance for an enemy to fire a homing missile
-        enemy = random.choice(worldstate.enemies)
-        missile_speed = 3
-
-        def draw_missile(obj, screen):
-            pygame.draw.circle(screen, RED, (obj.x, obj.y), 5)
-
-        def update_missile(obj):
-            dx = worldstate.player.x + worldstate.player.width // 2 - obj.x
-            dy = PLAYER_HEIGHT + worldstate.player.height // 2 - obj.y
-            dist = max(1, (dx**2 + dy**2)**0.5)
-            obj.x += missile_speed * dx / dist
-            obj.y += missile_speed * dy / dist
-            if pygame.Rect(obj.x, obj.y, 5, 5).colliderect(
-                worldstate.player.x, PLAYER_HEIGHT, worldstate.player.width, worldstate.player.height
-            ):
-                worldstate.gameOver = True
-            if obj.y > SCREEN_HEIGHT or obj.x < 0 or obj.x > SCREEN_WIDTH:
-                worldstate.objects.remove(obj)
-
-        worldstate.objects.append(Object(enemy.x + enemy.width // 2, enemy.y + enemy.height, draw_missile, update_missile))
-
-# Summary:
-# - Added add_homing_missiles: Introduces homing missiles that track the player.
-
-import random
-import pygame
-
-def add_shields(worldstate):  # Introduces protective shields for the player
-    if len([obj for obj in worldstate.objects if getattr(obj, 'is_shield', False)]) == 0 and random.randint(0, 1000) < 5:  # 0.5% chance to spawn a shield
-        shield_duration = 300  # Duration of the shield in frames
-
-        def draw_shield(obj, screen):
-            pygame.draw.ellipse(screen, (0, 255, 255), (worldstate.player.x - 10, PLAYER_HEIGHT - 10, worldstate.player.width + 20, worldstate.player.height + 20), 2)
-
-        def update_shield(obj):
-            nonlocal shield_duration
-            shield_duration -= 1
-            if shield_duration <= 0:
-                worldstate.objects.remove(obj)
-
-        shield_obj = Object(worldstate.player.x, PLAYER_HEIGHT, draw_shield, update_shield)
-        shield_obj.is_shield = True
-        worldstate.objects.append(shield_obj)
-
-# Summary:
-# - Added add_shields: Introduces temporary protective shields around the player.
-
-def add_energy_orbs(worldstate):  # Introduces energy orbs that grant temporary speed boost
-    if random.randint(0, 1000) < 10:  # 1% chance to spawn an energy orb
-        orb_x = random.randint(20, SCREEN_WIDTH - 40)
-        orb_y = random.randint(20, SCREEN_HEIGHT - 80)
-        orb_speed_boost_duration = 180  # Duration of speed boost in frames
-        orb_collected = False
-
-        def draw_orb(obj, screen):
-            pygame.draw.circle(screen, (255, 255, 0), (obj.x, obj.y), 10)  # Draws a yellow orb
-
-        def update_orb(obj):
-            nonlocal orb_collected
-            if not orb_collected:
-                if pygame.Rect(obj.x, obj.y, 20, 20).colliderect(worldstate.player.x, PLAYER_HEIGHT, worldstate.player.width, worldstate.player.height):
-                    orb_collected = True
-                    worldstate.player.speed += 4
-            else:
-                orb_speed_boost_duration -= 1
-                if orb_speed_boost_duration <= 0:
-                    worldstate.objects.remove(obj)
-                    worldstate.player.speed -= 4
-
-        worldstate.objects.append(Object(orb_x, orb_y, draw_orb, update_orb))
-
-# Summary:
-# - Added add_energy_orbs: Introduces energy orbs that boost player speed temporarily.
-
-import pygame
-import random
-
-def add_meteor_shower(worldstate):  # Adds a meteor shower to increase difficulty
-    if random.randint(0, 100) < 2:  # 2% chance to generate a meteor per frame
-        meteor_x = random.randint(0, SCREEN_WIDTH - 30)
-        meteor_speed = random.uniform(2, 5)
-
-        def draw_meteor(obj, screen):
-            pygame.draw.ellipse(screen, (150, 150, 150), (obj.x, obj.y, 30, 15))  # Gray meteor color
-            pygame.draw.line(screen, (255, 0, 0), (obj.x + 5, obj.y + 7.5), (obj.x + 25, obj.y + 7.5), 1)  # Add a line representing flame
-
-        def update_meteor(obj):
-            obj.y += meteor_speed
-            if obj.y > SCREEN_HEIGHT:
-                worldstate.objects.remove(obj)  # Remove meteor when out of screen
-            if pygame.Rect(obj.x, obj.y, 30, 15).colliderect(worldstate.player.x, PLAYER_HEIGHT, worldstate.player.width, worldstate.player.height):
-                worldstate.gameOver = True
-
-        worldstate.objects.append(Object(meteor_x, 0, draw_meteor, update_meteor))
-
-# Summary:
-# - Added add_meteor_shower: Introduces a meteor shower that can collide with the player.
-
-def add_gravitational_pull(worldstate):  # Introduces a dynamic gravitational pull affecting player and bullets
-    center_x, center_y = SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2
-    gravitational_force = 0.2
-
-    def apply_gravity(x, y, obj_x, obj_y):
-        dx = center_x - obj_x
-        dy = center_y - obj_y
-        distance = max(1, math.hypot(dx, dy))
-        force_x = gravitational_force * dx / distance
-        force_y = gravitational_force * dy / distance
-        return x + force_x, y + force_y
-
-    def update_physics(obj):
-        if isinstance(obj, Bullet):
-            obj.x, obj.y = apply_gravity(obj.x, obj.y, obj.x, obj.y)
-        elif isinstance(obj, Player):
-            worldstate.player.x, _ = apply_gravity(worldstate.player.x, PLAYER_HEIGHT, worldstate.player.x, PLAYER_HEIGHT)
-
-    for bullet in worldstate.bullets:
-        update_physics(bullet)
-    update_physics(worldstate.player)
-
-# Summary:
-# - Added add_gravitational_pull: Players and bullets are affected by gravitational pull towards the center.
-
-def add_rainbow_bonus(worldstate):  # Introduces bonus orbs that increase player's score
-    if len([obj for obj in worldstate.objects if getattr(obj, 'is_bonus', False)]) == 0 and random.randint(0, 1000) < 3:
-        bonus_x = random.randint(20, SCREEN_WIDTH - 40)
-        bonus_y = random.randint(20, SCREEN_HEIGHT - 80)
-        bonus_lifetime = 300
-
-        def draw_bonus(obj, screen):
-            pygame.draw.circle(screen, random.choice([RED, GREEN, BLUE, ORANGE, PURPLE, WHITE]), (obj.x, obj.y), 15)
-
-        def update_bonus(obj):
-            nonlocal bonus_lifetime
-            bonus_lifetime -= 1
-            if bonus_lifetime <= 0 or pygame.Rect(obj.x, obj.y, 15, 15).colliderect(worldstate.player.x, PLAYER_HEIGHT, worldstate.player.width, worldstate.player.height):
-                if pygame.Rect(obj.x, obj.y, 15, 15).colliderect(worldstate.player.x, PLAYER_HEIGHT, worldstate.player.width, worldstate.player.height):
-                    worldstate.score += 50
-                worldstate.objects.remove(obj)
-
-        bonus_obj = Object(bonus_x, bonus_y, draw_bonus, update_bonus)
-        bonus_obj.is_bonus = True
-        worldstate.objects.append(bonus_obj)
-
-# Summary:
-# - Added add_rainbow_bonus: Introduces orbs that increase player's score if collected.
-
-import random
-import pygame
-
-def add_black_hole(worldstate):  # Introduces a black hole that pulls enemies towards it
-    if len([obj for obj in worldstate.objects if getattr(obj, 'is_black_hole', False)]) == 0 and random.randint(0, 1000) < 3:  # 0.3% chance to spawn a black hole
+def add_black_hole(worldstate):  # Introduces a black hole that pulls player and bullets towards its center
+    if random.randint(0, 1000) < 5:  # 0.5% chance to spawn a black hole frame
         black_hole_x = random.randint(100, SCREEN_WIDTH - 100)
         black_hole_y = random.randint(100, SCREEN_HEIGHT - 200)
-        pull_force = 0.5
+        black_hole_radius = 50
 
         def draw_black_hole(obj, screen):
-            pygame.draw.circle(screen, (0, 0, 0), (obj.x, obj.y), 25)
-            pygame.draw.circle(screen, (100, 0, 255), (obj.x, obj.y), 30, 2)
+            pygame.draw.circle(screen, (0, 0, 0), (int(obj.x), int(obj.y)), int(black_hole_radius * (1 + 0.1 * math.sin(pygame.time.get_ticks() / 200))))
 
         def update_black_hole(obj):
-            for enemy in worldstate.enemies:
-                dx = obj.x - (enemy.x + enemy.width // 2)
-                dy = obj.y - (enemy.y + enemy.height // 2)
-                dist = max(1, math.hypot(dx, dy))
-                if dist < 150:  # Only pull enemies within a certain range
-                    enemy.x += pull_force * dx / dist
-                    enemy.y += pull_force * dy / dist
+            for bullet in worldstate.bullets:
+                dx = obj.x - bullet.x
+                dy = obj.y - bullet.y
+                distance = math.hypot(dx, dy)
+                if distance < black_hole_radius * 3:
+                    bullet.x += dx * 0.05
+                    bullet.y += dy * 0.05
+                
+            dx = obj.x - worldstate.player.x
+            if abs(dx) < black_hole_radius * 3:
+                worldstate.player.x += dx * 0.05
 
-        black_hole_obj = Object(black_hole_x, black_hole_y, draw_black_hole, update_black_hole)
-        black_hole_obj.is_black_hole = True
-        worldstate.objects.append(black_hole_obj)
+            if pygame.Rect(obj.x - black_hole_radius, obj.y - black_hole_radius, black_hole_radius * 2, black_hole_radius * 2).colliderect(worldstate.player.x, PLAYER_HEIGHT, worldstate.player.width, worldstate.player.height):
+                worldstate.gameOver = True
+            
+            if pygame.time.get_ticks() % 500 == 0:  # Disappear after some time 
+                worldstate.objects.remove(obj)
+
+        worldstate.objects.append(Object(black_hole_x, black_hole_y, draw_black_hole, update_black_hole))
 
 # Summary:
-# - Added add_black_hole: Introduces a black hole that pulls nearby enemies toward it.
+# - Added add_black_hole: Introduces a black hole pulling player and bullets.
+
+import random
+import pygame
+
+def add_portals(worldstate):  # Adds portals that teleport the player across the screen
+    def draw_portal(obj, screen):
+        pygame.draw.ellipse(screen, (0, 255, 255), (int(obj.x), int(obj.y), 50, 100))
+
+    def update_portal(obj):
+        player_rect = pygame.Rect(worldstate.player.x, PLAYER_HEIGHT, worldstate.player.width, worldstate.player.height)
+        portal_rect = pygame.Rect(obj.x, obj.y, 50, 100)
+        
+        if player_rect.colliderect(portal_rect):
+            worldstate.player.x = SCREEN_WIDTH - worldstate.player.x - worldstate.player.width  # Teleport to the opposite side
+            worldstate.objects.remove(obj)  # Remove the portal after use
+
+    if len([(obj.x, obj.y) for obj in worldstate.objects if isinstance(obj, Object) and hasattr(obj.draw_function, '__call__')]) < 2:  # Limit to two portals
+        portal_x = random.choice([0, SCREEN_WIDTH - 50])  # Portals appear randomly at the far sides of the screen
+        portal_y = random.randint(PLAYER_HEIGHT - 100, PLAYER_HEIGHT - 50)
+        worldstate.objects.append(Object(portal_x, portal_y, draw_portal, update_portal))
+
+# Summary:
+# - Added add_portals: Introduces portals that teleport the player across the screen.
+
+import random
+import pygame
+
+def add_shield_pickup(worldstate):  # Introduces a shield pickup that grants temporary invincibility
+    if random.randint(0, 2000) < 1:  # 0.05% chance to spawn a shield pickup frame
+        shield_x = random.randint(20, SCREEN_WIDTH - 70)
+        shield_y = random.randint(100, SCREEN_HEIGHT - 150)
+        shield_duration = 5000  # Shield lasts for 5 seconds
+
+        def draw_shield(obj, screen):
+            pygame.draw.ellipse(screen, (0, 255, 0), (int(obj.x), int(obj.y), 50, 50))
+
+        def update_shield(obj):
+            player_rect = pygame.Rect(worldstate.player.x, PLAYER_HEIGHT, worldstate.player.width, worldstate.player.height)
+            shield_rect = pygame.Rect(obj.x, obj.y, 50, 50)
+
+            if player_rect.colliderect(shield_rect):
+                worldstate.player.invincible = True
+
+                def remove_invincibility():
+                    worldstate.player.invincible = False
+                
+                pygame.time.set_timer(pygame.USEREVENT, shield_duration)
+                worldstate.enemies = [enemy for enemy in worldstate.enemies]
+                worldstate.objects.remove(obj)
+
+        def check_events():
+            for event in pygame.event.get():
+                if event.type == pygame.USEREVENT:
+                    remove_invincibility()
+
+        worldstate.objects.append(Object(shield_x, shield_y, draw_shield, update_shield))
+        check_events()
+
+# Summary:
+# - Added add_shield_pickup: Introduces a shield pickup for temporary invincibility.
+
+import random
+import pygame
+import math
+
+def add_sine_wave_movement(worldstate):  # Adds enemies that move in a sine wave pattern for increased challenge
+    for enemy in worldstate.enemies:
+        enemy.original_y = hasattr(enemy, 'original_y') and enemy.original_y or enemy.y
+        sine_wave_amplitude = 30
+        sine_wave_frequency = 0.05
+        enemy.y = enemy.original_y + sine_wave_amplitude * math.sin(worldstate.score * sine_wave_frequency)
+
+    if worldstate.level >= 2:  # Implement sine wave movement starting from level 2
+        for enemy in worldstate.enemies:
+            enemy.direction = -1 if enemy.x >= SCREEN_WIDTH - enemy.width - 20 else (1 if enemy.x <= 20 else enemy.direction)
+            enemy.x += enemy.speed * enemy.direction
+
+# Summary:
+# - Added add_sine_wave_movement: Enemies move in a sine wave pattern for increased challenge.
+
+import random
+import pygame
+
+def deploy_space_mines(worldstate):  # Deploys space mines that explode when approached, damaging nearby enemies or the player
+    if random.randint(0, 1000) < 5:  # 0.5% chance to deploy a space mine frame
+        mine_x = random.randint(50, SCREEN_WIDTH - 70)
+        mine_y = random.randint(100, SCREEN_HEIGHT - 150)
+        mine_radius = 20
+
+        def draw_mine(obj, screen):
+            pygame.draw.circle(screen, (200, 200, 0), (int(obj.x), int(obj.y)), mine_radius)
+
+        def update_mine(obj):
+            player_rect = pygame.Rect(worldstate.player.x, PLAYER_HEIGHT, worldstate.player.width, worldstate.player.height)
+            mine_rect = pygame.Rect(obj.x - mine_radius, obj.y - mine_radius, mine_radius * 2, mine_radius * 2)
+
+            if player_rect.colliderect(mine_rect):
+                worldstate.gameOver = True
+            else:
+                # Check collision with enemies
+                for enemy in worldstate.enemies[:]:
+                    enemy_rect = pygame.Rect(enemy.x, enemy.y, enemy.width, enemy.height)
+                    if mine_rect.colliderect(enemy_rect):
+                        worldstate.enemies.remove(enemy)
+
+            if random.randint(0, 100) < 3:  # Random chance for mine to explode
+                if enemy in worldstate.enemies[:]:
+                    worldstate.enemies.remove(enemy)
+                worldstate.objects.remove(obj)
+
+        worldstate.objects.append(Object(mine_x, mine_y, draw_mine, update_mine))
+
+# Summary:
+# - Added deploy_space_mines: Deploys space mines that explode on approach, affecting enemies or the player.
+
+import random
+import pygame
+
+def add_powerup_asteroid(worldstate):  # Adds asteroids that drop power-ups when destroyed
+    if random.randint(0, 1000) < 5:  # 0.5% chance to spawn an asteroid per frame
+        asteroid_x = random.randint(50, SCREEN_WIDTH - 70)
+        asteroid_y = -20  # Start off-screen
+        asteroid_radius = 30
+
+        def draw_asteroid(obj, screen):
+            pygame.draw.circle(screen, (128, 128, 128), (int(obj.x), int(obj.y)), asteroid_radius)
+
+        def update_asteroid(obj):
+            obj.y += 2  # Asteroids move downwards
+            if obj.y > SCREEN_HEIGHT:
+                worldstate.objects.remove(obj)
+
+            # Check collision with bullets
+            for bullet in worldstate.bullets[:]:
+                if pygame.Rect(bullet.x, bullet.y, bullet.width, bullet.height).colliderect(obj.x - asteroid_radius, obj.y - asteroid_radius, asteroid_radius * 2, asteroid_radius * 2):
+                    worldstate.bullets.remove(bullet)
+                    worldstate.objects.remove(obj)
+                    spawn_powerup(worldstate, obj.x, obj.y)
+
+        worldstate.objects.append(Object(asteroid_x, asteroid_y, draw_asteroid, update_asteroid))
+
+def spawn_powerup(worldstate, x, y):
+    powerup_type = random.choice(["fast_fire", "invincibility"])
+    powerup_duration = 1000
+
+    def draw_powerup(obj, screen):
+        color = (0, 255, 0) if obj.type == "invincibility" else (255, 165, 0)
+        pygame.draw.ellipse(screen, color, (obj.x, obj.y, 20, 20))
+
+    def update_powerup(obj):
+        obj.y += 1  # Power-up slowly descends
+        if obj.y > SCREEN_HEIGHT:
+            worldstate.objects.remove(obj)
+
+        player_rect = pygame.Rect(worldstate.player.x, PLAYER_HEIGHT, worldstate.player.width, worldstate.player.height)
+        powerup_rect = pygame.Rect(obj.x, obj.y, 20, 20)
+
+        if player_rect.colliderect(powerup_rect):
+            if obj.type == "fast_fire":
+                worldstate.player.fastFire = True
+            elif obj.type == "invincibility":
+                worldstate.player.invincible = True
+
+            def deactivate_powerup():
+                if obj.type == "fast_fire":
+                    worldstate.player.fastFire = False
+                elif obj.type == "invincibility":
+                    worldstate.player.invincible = False
+
+            pygame.time.set_timer(pygame.USEREVENT, powerup_duration)
+            worldstate.objects.remove(obj)
+            check_events = lambda: None  
+
+            def check_events():
+                for event in pygame.event.get():
+                    if event.type == pygame.USEREVENT:
+                        deactivate_powerup()
+            
+            worldstate.dynamic_function = check_events
+
+    powerup_obj = Object(x, y, draw_powerup, update_powerup)
+    powerup_obj.type = powerup_type
+    worldstate.objects.append(powerup_obj)
+
+# Summary:
+# - Added add_powerup_asteroid: Asteroids drop power-ups when destroyed, enhancing gameplay.
+
+import random
+import pygame
+
+def add_time_warp(worldstate):  # Introduces time warp objects that temporarily slow down enemy movement
+    if random.randint(0, 1000) < 3:  # 0.3% chance to spawn a time warp per frame
+        warp_x = random.randint(50, SCREEN_WIDTH - 70)
+        warp_y = random.randint(100, SCREEN_HEIGHT - 150)
+        
+        def draw_time_warp(obj, screen):
+            pygame.draw.circle(screen, (0, 0, 255), (int(obj.x), int(obj.y)), 20)  # Blue circle
+        
+        def update_time_warp(obj):
+            player_rect = pygame.Rect(worldstate.player.x, PLAYER_HEIGHT, worldstate.player.width, worldstate.player.height)
+            warp_rect = pygame.Rect(obj.x - 20, obj.y - 20, 40, 40)
+            
+            if player_rect.colliderect(warp_rect):
+                for enemy in worldstate.enemies:
+                    enemy.speed = max(0.5, enemy.speed / 2)  # Slow down enemies
+                worldstate.objects.remove(obj)
+
+            if pygame.time.get_ticks() % 500 == 0:  # Time warp effect expires after a short duration
+                for enemy in worldstate.enemies:
+                    enemy.speed = min(2, enemy.speed * 2)  # Restore speed
+                worldstate.objects.remove(obj)
+                
+        worldstate.objects.append(Object(warp_x, warp_y, draw_time_warp, update_time_warp))
+
+# Summary:
+# - Added add_time_warp: Introduces time warp objects that slow enemy movement temporarily.

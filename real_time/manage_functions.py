@@ -2,6 +2,7 @@ import importlib
 import inspect
 import sys
 from llm.generate_function import generate_function
+import re
 
 def add_function_for_level(level):
     """Requests a new function from GPT for a specific game level and appends it to dynamic.py."""
@@ -28,23 +29,38 @@ def add_function_for_level(level):
 def load_and_execute_functions(module_name="real_time.dynamic"):
     """
     Loads all functions from a specified file and returns them for execution in the game.
+    Maintains the order in which functions are defined in the file.
     """
     # Ensure the module is reloaded each time by removing it from sys.modules
     if module_name in sys.modules:
         del sys.modules[module_name]
 
+    # Step 1: Extract function names from the file to preserve order
+    function_order = []
     try:
-        # Dynamically import the module
+        with open("./real_time/dynamic.py", "r") as file:
+            lines = file.readlines()
+            function_pattern = re.compile(r"^def\s+(\w+)\s*\(")
+            for line in lines:
+                match = function_pattern.match(line)
+                if match:
+                    function_order.append(match.group(1))
+
+        # Step 2: Dynamically import the module and get all functions
         module = importlib.import_module(module_name)
-        # Get all functions defined in the module
         functions = {name: func for name, func in inspect.getmembers(module, inspect.isfunction)}
-        if functions:
-            # Get the last function in the dictionary
-            last_function_name = list(functions.keys())[-1]
-            last_function = functions[last_function_name]
+
+        # Step 3: Reorder functions based on their appearance in the file
+        ordered_functions = {name: functions[name] for name in function_order if name in functions}
+
+        # Step 4: Retrieve the last function in order
+        if ordered_functions:
+            last_function_name = list(ordered_functions.keys())[-1]
+            last_function = ordered_functions[last_function_name]
             print(f"Function Loaded just: {last_function_name}")
             return {last_function_name: last_function}
-        return functions
+        return ordered_functions
+
     except Exception as e:
         print(f"Error loading functions from dynamic.py: {e}")
         return {}
@@ -62,7 +78,7 @@ def prepare_next_level(level):
     summary = add_function_for_level(level)
 
     print("summary: " + summary)
-
+    
     # Step 2: Load the functions from dynamic.py, including the newly added one
     functions = load_and_execute_functions()
     func_name, func = list(functions.items())[-1]

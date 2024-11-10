@@ -291,7 +291,7 @@ def use_nuke(worldstate):
     if worldstate.player.nuke_available:
         # Clear all enemies from the game
         worldstate.enemies.clear()
-        worldstate.player.nuke_available = False  # Nuke can only be used once
+        #worldstate.player.nuke_available = False  # Nuke can only be used once
         # Optional: Display a message to the player
         display_message(worldstate.screen, "NUKE Activated!\nAll Enemies Destroyed", duration=1, height = 40)
 
