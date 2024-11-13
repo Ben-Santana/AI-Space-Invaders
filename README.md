@@ -1,6 +1,6 @@
 # Tomo
 
-A modern twist on the classic Space Invaders game! This project features an evolving code base that utilizes a large language model (LLM) to dynamically introduce new game mechanics with each level, creating a unique experience with every session.
+*By: Benjamin Santana, Madhav Lodha, Brendan Peters, Alejandro*
 
 ## Project Overview
 
