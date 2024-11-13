@@ -34,3 +34,8 @@ Run the main game script:
 python game.py
 ```
 
+Our main branch implements a leap motion hand tracker to control the player using hand movements, if you would like to play with keyboard inputs, I would recommend checking out the BensTweaks branch.
+
+## License
+
+This project is licensed under the MIT License.
