@@ -11,6 +11,17 @@ def generate_function():
     # remove unecessary ```
     return remove_code_block_markers(response)
 
+def generate_boss_function():
+    gpt = GPT()
+    user_prompt_boss = open(f"./llm/prompts/user_prompt_boss.txt", "r").read() + open(f"./real_time/dynamic.py", "r").read()
+    system_prompt = open(f"./llm/prompts/system_prompt.txt", "r").read() + open(f"./game.py", "r").read()
+
+    # generate response
+    response = gpt.text_completion(user_prompt=user_prompt_boss, system_prompt=system_prompt)
+
+    # remove unecessary ```
+    return remove_code_block_markers(response)
+
 def remove_code_block_markers(text):  # Removes ```python and ``` markers from the given text
     lines = text.split('\n')
     cleaned_lines = [line for line in lines if line.strip() != '```python' and line.strip() != '```']

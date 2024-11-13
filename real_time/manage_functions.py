@@ -1,7 +1,7 @@
 import importlib
 import inspect
 import sys
-from llm.generate_function import generate_function
+from llm.generate_function import generate_boss_function, generate_function
 import re
 
 def add_function_for_level(level):
@@ -21,6 +21,28 @@ def add_function_for_level(level):
         print(f"New function added for Level {level}.")
     except Exception as e:
         print(f"Error adding function for Level {level}: {e}")
+
+    # 5. Extract the summary for displaying in the game
+    summary = extract_summary(response)
+    return summary
+
+def add_function_for_boss_level():
+    """Requests a new function from GPT for a specific game level and appends it to dynamic.py."""
+    print(f"Requesting new function for Boss Level...")
+    
+    response = generate_boss_function()
+
+    # 3. Clean and format the response to extract function code
+    function_code = response
+
+    # 4. Append the function code to dynamic.py
+    try:
+        with open("./real_time/dynamic.py", "a") as file:
+            file.write("\n\n")  # Add spacing between functions for readability
+            file.write(function_code)
+        print(f"New function added for Boss Level.")
+    except Exception as e:
+        print(f"Error adding function for Boss Level: {e}")
 
     # 5. Extract the summary for displaying in the game
     summary = extract_summary(response)
@@ -67,10 +89,12 @@ def load_and_execute_functions(module_name="real_time.dynamic"):
 
     
 def reset_functions():
-    with open("./dynamic.py", 'w') as file:
-        file.write("""import pygame 
-                   from game import WorldState, Object, Player, Boss, Enemy, Bullet, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE, BLACK, GREEN, RED, clock
-                    """)
+    try:
+        with open("./real_time/dynamic.py", "w") as file:
+            file.write(open(f"./real_time/seed.py", "r").read())
+        print(f"Functions Reset.")
+    except Exception as e:
+        print(f"Error resetting functions: {e}")
 
 def prepare_next_level(level):
     """Sets up and loads the new function for the next game level, including the summary."""
@@ -83,7 +107,19 @@ def prepare_next_level(level):
     functions = load_and_execute_functions()
     func_name, func = list(functions.items())[-1]
 
+    # Step 3: Return both the functions and the summary text for display
+    return func, summary
 
+def prepare_boss_level():
+    """Sets up and loads the new function for the next game level, including the summary."""
+    # Step 1: Request and add a new function for the level
+    summary = add_function_for_boss_level()
+
+    print("summary: " + summary)
+    
+    # Step 2: Load the functions from dynamic.py, including the newly added one
+    functions = load_and_execute_functions()
+    func_name, func = list(functions.items())[-1]
 
     # Step 3: Return both the functions and the summary text for display
     return func, summary

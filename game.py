@@ -4,10 +4,7 @@ import copy
 import pygame
 import sys
 
-from real_time.manage_functions import prepare_next_level
-
-
-from real_time.manage_functions import prepare_next_level
+from real_time.manage_functions import prepare_boss_level, prepare_next_level, reset_functions
 
 # Initialize Pygame
 pygame.init()
@@ -37,8 +34,9 @@ BAR_Y = SCREEN_HEIGHT - 5
 PLAYER_SKINS = [GREEN, BLUE, ORANGE, TEAL]  # Define more colors as needed
 
 # Set up the display
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+#screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Space Invaders")
+
 
 # Clock for controlling the frame rate
 clock = pygame.time.Clock()
@@ -57,6 +55,22 @@ class WorldState:
         self.boss_frequency = 3
         self.gameOver = False
         self.dynamic_function, self.level_summary = prepare_next_level(1)
+        self.running = True
+        self.stars = generate_stars(100)
+
+    def reset(self):
+        self.player = Player()
+        self.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
+        self.boss = None
+        self.bullets = []
+        self.objects = []
+        self.score = 0
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.level = 1
+        self.boss_frequency = 3
+        self.gameOver = False
+        self.running = True
+        self.stars = generate_stars(100)
 
 
 # Define the Player class
@@ -65,9 +79,8 @@ class Player:
         self.width = 50
         self.height = 50
         self.x = SCREEN_WIDTH // 2 - self.width // 2
-    
+        self.fireRate = 1
         self.speed = 8
-        self.fastFire = False
         self.nuke_available = True
         self.color = color  # Add color attribute for the skin
 
@@ -211,10 +224,49 @@ class Bullet:
         self.dy = dy  # Direction and speed of bullet
         
     def draw(self, surface):
-        pygame.draw.rect(surface, WHITE, (self.x, self.y, self.width, self.height))
-        pygame.draw.rect(surface, ORANGE, (self.x - 1.5, self.y -6.5, 8, 6.5))
-        pygame.draw.rect(surface, RED, (self.x + 1.5, self.y + self.height, 2, 10))
+        pygame.draw.ellipse(surface, WHITE, (self.x, self.y, self.width, self.height * 3))
         
+class Star:
+    def __init__(self, x, y, dy, size, color):
+        self.x = x
+        self.y = y
+        self.dy = dy
+        self.size = size
+        self.color = color
+    
+    def update(self):
+        self.y += self.dy
+        if(self.y > SCREEN_HEIGHT): 
+            self.y = 0
+    
+    def draw(self, surface):
+        pygame.draw.circle(surface, self.color, (self.x, self.y), self.size)
+    
+
+def generate_stars(num_stars):
+    stars = []
+    for _ in range(num_stars):
+        x = random.randint(0, SCREEN_WIDTH)
+        y = random.randint(0, SCREEN_HEIGHT)
+        colorRandom = random.randint(0, 50) + 130
+        color = pygame.Color(colorRandom + random.randint(0, 25), 
+                             colorRandom + random.randint(0, 25), 
+                             colorRandom + random.randint(0, 25))
+        size = random.randint(1, 4)  # Random size for the star
+        dy = size
+        stars.append(Star(x, y, dy, size, color))
+    return stars
+    
+    
+# Draw stars on the screen
+def draw_stars(worldstate):
+    for star in worldstate.stars:
+        star.draw(worldstate.screen)
+
+def move_stars(worldstate):
+    for star in worldstate.stars:
+        star.update()
+
 # Function to handle player movement
 def handle_player_movement(worldstate):
     keys = pygame.key.get_pressed()
@@ -224,8 +276,6 @@ def handle_player_movement(worldstate):
         worldstate.player.x += worldstate.player.speed
     if keys[pygame.K_SPACE]:
         handle_player_shooting(worldstate)
-    if keys[pygame.K_f]:
-        handle_cheats(worldstate)
     if keys[pygame.K_n]:  # Use the N key for the nuke
         use_nuke(worldstate)
 
@@ -233,22 +283,10 @@ def handle_player_movement(worldstate):
 def handle_player_shooting(worldstate):
     keys = pygame.key.get_pressed()
     if keys[pygame.K_SPACE]:
-        # Limit to one bullet on screen
-        if(worldstate.player.fastFire):
-            bullet = Bullet(worldstate.player.x + worldstate.player.width // 2, PLAYER_HEIGHT, -10)
+        # Limit to fireRate amount of bullets on screen
+        if len(list(bullet.dy < 0 for bullet in worldstate.bullets)) < worldstate.player.fireRate:
+            bullet = Bullet(worldstate.player.x + worldstate.player.width // 2, PLAYER_HEIGHT, -15)
             worldstate.bullets.append(bullet)
-        else:
-            if not any(bullet.dy < 0 for bullet in worldstate.bullets):
-                bullet = Bullet(worldstate.player.x + worldstate.player.width // 2, PLAYER_HEIGHT, -10)
-                worldstate.bullets.append(bullet)
-
-# Gives Cheat 
-def handle_cheats(worldstate):
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_f] and not worldstate.player.fastFire:        
-        worldstate.player.fastFire = True
-    elif keys[pygame.K_f] and worldstate.player.fastFire:
-        worldstate.player.fastFire = False
 
 # Function to update bullets
 def update_bullets(worldstate):
@@ -285,15 +323,14 @@ def update_enemies(worldstate):
             worldstate.gameOver = True
             break
 
-
-#Especial nuke
+# Special nuke
 def use_nuke(worldstate):
     if worldstate.player.nuke_available:
         # Clear all enemies from the game
         worldstate.enemies.clear()
         #worldstate.player.nuke_available = False  # Nuke can only be used once
         # Optional: Display a message to the player
-        display_message(worldstate.screen, "NUKE Activated!\nAll Enemies Destroyed", duration=1, height = 40)
+        display_message(worldstate.screen, "NUKE ACTIVATED!\nALL ENEMIES DESTROYED!", duration=1, height = 40)
 
 # Function to handle collisions
 def handle_collisionsE(worldstate):
@@ -310,9 +347,8 @@ def handle_collisionsE(worldstate):
                 worldstate.score += 10
                 break
 
-
 def display_message(surface, text, duration=2, height=None):
-    font = pygame.font.Font("nothing-font-5x7.ttf", 48)
+    font = pygame.font.Font("contest.ttf", 48)
     
     # Split text into multiple lines
     lines = text.splitlines()
@@ -343,12 +379,11 @@ def display_message(surface, text, duration=2, height=None):
     pygame.time.delay(duration * 1000)
 
 def display_game_over(worldstate):
-    global level  # Ensure level reset happens only here
-    font = pygame.font.Font("nothing-font-5x7.ttf", 48)
-    game_over_text = font.render("Game Over!", True, WHITE)
-    restart_text = font.render("Press SPACE to Restart", True, WHITE)
-    
-    worldstate.__init__()
+    font = pygame.font.Font("contest.ttf", 48)
+    game_over_text = font.render("GAME OVER!", True, WHITE)
+    restart_text = font.render("PRESS SPACE TO RESTART", True, WHITE)
+
+    worldstate.reset()
 
     game_over_rect = game_over_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 30))
     restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 30))
@@ -367,6 +402,10 @@ def display_game_over(worldstate):
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 waiting = False
                 worldstate.gameOver = False
+                display_loading(worldstate)
+                get_new_function(worldstate)
+
+
 
 def update_boss(boss, worldstate):
     boss.move()  # Move boss based on its behavior
@@ -388,21 +427,30 @@ def handle_collisions_boss(worldstate):
             worldstate.bullets.remove(bullet)
 
 # Function to display the main menu with a skin change option
-def display_menu(surface):
-    global level
-    font = pygame.font.Font("nothing-font-5x7.ttf", 48)
-    menu_options = ["Start Game", "Choose Color", "Quit"]
+def display_menu(worldstate):
+
+    menu_options = ["START", "CHOOSE COLOR", "QUIT", "RESET"]
     selected_option = 0
 
     while True:
-        surface.fill(BLACK)
+        worldstate.screen.fill(BLACK)
+
+        # Display title
+        font = pygame.font.Font("contest.ttf", 86)
+        title = font.render("TOMO", True, pygame.Color(255, 255, 255))
+        title_rect = title.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4))
+        worldstate.screen.blit(title, title_rect)
 
         # Render menu options
+        font = pygame.font.Font("contest.ttf", 32)
         for i, option in enumerate(menu_options):
-            color = (0, 255, 0) if i == selected_option else WHITE
+            color = WHITE if i == selected_option else (180, 180, 180)
             text = font.render(option, True, color)
             text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + i * 50))
-            surface.blit(text, text_rect)
+            worldstate.screen.blit(text, text_rect)
+
+        draw_stars(worldstate)
+        move_stars(worldstate)
 
         pygame.display.flip()
 
@@ -420,15 +468,17 @@ def display_menu(surface):
                     if selected_option == 0:
                         return  # Start the game
                     elif selected_option == 1:
-                        display_skin_menu(surface)  # Open the skin selection menu
+                        display_skin_menu(worldstate.screen)  # Open the skin selection menu
                     elif selected_option == 2:
                         pygame.quit()
                         sys.exit()
+                    elif selected_option == 3:
+                        reset_functions()
 
 # Function to display the skin selection menu
 def display_skin_menu(surface):
     global PLAYER_SKINS
-    font = pygame.font.Font("nothing-font-5x7.ttf", 48)
+    font = pygame.font.Font("contest.ttf", 48)
     selected_skin = 0
 
     while True:
@@ -436,7 +486,7 @@ def display_skin_menu(surface):
 
         # Render skin options
         for i, color in enumerate(PLAYER_SKINS):
-            skin_text = font.render("StarShip " + str(i+1), True, color)
+            skin_text = font.render("STARSHIP " + str(i+1), True, color)
             text_rect = skin_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + i * 50))
             surface.blit(skin_text, text_rect)
             if i == selected_skin:
@@ -525,9 +575,11 @@ def handle_new_level(worldstate):
     worldstate.objects = []
     worldstate.boss = None
     worldstate.enemies = [Enemy(x * 60 + 50, y * 60 + 50) for x in range(8) for y in range(3)]
-    display_message(worldstate.screen, f"Level {worldstate.level}\nComplete! Next Level!", duration=2)
+    display_message(worldstate.screen, f"LEVEL {worldstate.level} COMPLETE!\nNEXT LEVEL!", duration=2)
     worldstate.level += 1
-    worldstate.dynamic_function, worldstate.level_summary = prepare_next_level(worldstate.level)  # Load new functions for the next level
+    display_loading(worldstate)
+    if not worldstate.gameOver:
+        get_new_function(worldstate)
 
     if worldstate.level <= 4:
         for enemy in worldstate.enemies:
@@ -536,9 +588,15 @@ def handle_new_level(worldstate):
             for enemy in worldstate.enemies:
                 enemy.speed += worldstate.level / 10
 
+def get_new_function(worldstate):
+    if worldstate.level % worldstate.boss_frequency == 0:
+            worldstate.dynamic_function, worldstate.level_summary = prepare_boss_level()
+    else: 
+        worldstate.dynamic_function, worldstate.level_summary = prepare_next_level(worldstate.level)
+
 def display_score(worldstate):
-    font = pygame.font.Font("nothing-font-5x7.ttf", 36)
-    score_text = font.render(f"Score: {worldstate.score}", True, WHITE)
+    font = pygame.font.Font("contest.ttf", 36)
+    score_text = font.render(f"SCORE: {worldstate.score}", True, WHITE)
     worldstate.screen.blit(score_text, (10, 10))
 
 def draw_objects(worldstate):
@@ -566,49 +624,43 @@ def draw_enemy_bar(surface, total_enemies, remaining_enemies):
     filled_width = int(BAR_WIDTH * fill_ratio)
     
     # Draw the background of the bar
-    pygame.draw.rect(surface, RED, (BAR_X, BAR_Y, BAR_WIDTH, BAR_HEIGHT))
+    pygame.draw.rect(surface, pygame.Color(50, 50, 50), (BAR_X, BAR_Y, BAR_WIDTH, BAR_HEIGHT))
     
     # Draw the filled portion of the bar
-    pygame.draw.rect(surface, GREEN, (BAR_X, BAR_Y, filled_width, BAR_HEIGHT))
+    pygame.draw.rect(surface, WHITE, (BAR_X, BAR_Y, filled_width, BAR_HEIGHT))
 
-def generate_stars(num_stars):
-    stars = []
-    for _ in range(num_stars):
-        x = random.randint(0, SCREEN_WIDTH)
-        y = random.randint(0, SCREEN_HEIGHT)
-        color = BLUE if random.choice([True, False]) else WHITE  # Randomly choose blue or white
-        radius = random.randint(1, 3)  # Random size for the star
-        stars.append((x, y, color, radius))
-    return stars
 
-# Draw stars on the screen
-def draw_stars(surface, stars):
-    for (x, y, color, radius) in stars:
-        pygame.draw.circle(surface, color, (x, y), radius)
-
+def display_loading(worldstate):
+    font = pygame.font.Font("contest.ttf", 48)
+    worldstate.screen.fill(BLACK)
+    draw_stars(worldstate)
+    move_stars(worldstate)
+    text = font.render("LOADING...", True, pygame.Color(255, 255, 255))
+    text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT //2))
+    worldstate.screen.blit(text, text_rect)
+    pygame.display.flip()
 
 def main():
     global player_skin
     # Initialize level, dynamic functions, and level summary
     worldstate = WorldState()
 
-    # Generate a list of stars to be used as background decoration
-    background_stars = generate_stars(100)  # Number of stars
-
     # Display the menu before starting the game
-    display_menu(worldstate.screen)
-    running = True
+    display_menu(worldstate)
     worldstate.player.color = player_skin
 
-    while running:
+    while worldstate.running:
         worldstate.screen.fill(BLACK)
 
         # Draw stars in the background
-        draw_stars(screen, background_stars)
+        draw_stars(worldstate)
+
+        # Move stars
+        move_stars(worldstate)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                worldstate.running = False
 
         # Spawn the boss if it's a boss level
         if worldstate.level % worldstate.boss_frequency == 0 and worldstate.boss is None:
@@ -618,7 +670,6 @@ def main():
         handle_player_movement(worldstate)
         handle_player_shooting(worldstate)
         update_bullets(worldstate)
-        handle_cheats(worldstate)
         draw_all_entities(worldstate)
         draw_objects(worldstate)
         update_objects(worldstate)
@@ -628,8 +679,9 @@ def main():
             update_boss(worldstate)
             if worldstate.boss.health <= 0:  # Boss defeated
                 worldstate.boss = None
-                display_message(screen, f"Level {worldstate.level} Complete!\nNext Level!", duration=1)
+                display_message(worldstate.screen, f"LEVEL {worldstate.level} COMPLETE!\nNEXT LEVEL!", duration=1)
                 worldstate.level += 1
+                get_new_function(worldstate)
         else:
             draw_enemy_bar(worldstate.screen, 24, len(worldstate.enemies))
             update_enemies(worldstate)
