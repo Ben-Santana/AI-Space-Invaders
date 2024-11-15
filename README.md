@@ -1,6 +1,6 @@
 # Tomo
 
-A modern twist on the classic Space Invaders game! This project features an evolving code base that utilizes a large language model (LLM) to dynamically introduce new game mechanics with each level, creating a unique experience with every session.
+*By: Benjamin Santana, Madhav Lodha, Brendan Peters, Alejandro*
 
 ## Project Overview
 
@@ -22,7 +22,7 @@ Tomo brings a fresh take on the arcade classic by incorporating AI-driven adapta
 To get started, clone the repository and install the required packages:
 
 ```bash
-git clone https://github.com/yourusername/space-invaders-evolved.git
+git clone https://github.com/Ben-Santana/Tomo.git
 cd tomo
 ```
 
