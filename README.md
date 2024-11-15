@@ -28,6 +28,12 @@ cd tomo
 
 ## Running the Game
 
+Add config.py file to ./llm with following code:
+
+```.gitignore
+OPENAI_KEY = <your_key>
+```
+
 Run the main game script:
 
 ```bash
