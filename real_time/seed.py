@@ -135,3 +135,85 @@ def deploy_replicating_mines(worldstate):  # Spawns mines that replicate if not 
 
 # Summary:
 # - Added deploy_replicating_mines: Mines spawn and replicate if not destroyed in time.
+
+def boss_summon_support_drones(worldstate):  # Boss summons support drones that shoot at the player
+    if worldstate.boss and random.randint(0, 500) < 3:  # About 0.6% chance each frame for boss to summon drones
+        drone_speed = 5
+        drone_shoot_interval = 60  # Drones shoot every second
+
+        def draw_drone(obj, screen):
+            pygame.draw.rect(screen, (160, 160, 160), (obj.x, obj.y, 20, 10))  # Gray drone body
+            pygame.draw.line(screen, WHITE, (obj.x + 10, obj.y + 10), (obj.x + 10, obj.y + 20), 3)  # Shooting line
+
+        def update_drone(obj):
+            obj.timer -= 1
+            if obj.timer <= 0:
+                worldstate.objects.remove(obj)
+
+            # Check if it's time for the drone to shoot
+            if obj.timer % drone_shoot_interval == 0:
+                bullet_x = obj.x + 10
+                bullet_y = obj.y + 20
+                bullet_dy = 8
+
+                def draw_drone_bullet(bullet_obj, screen):
+                    pygame.draw.rect(screen, RED, (bullet_obj.x, bullet_obj.y, 5, 10))
+
+                def update_drone_bullet(bullet_obj):
+                    bullet_obj.y += bullet_dy
+                    if bullet_obj.y > SCREEN_HEIGHT:
+                        worldstate.objects.remove(bullet_obj)
+                    # Check collision with player
+                    player_rect = pygame.Rect(worldstate.player.x, PLAYER_HEIGHT, worldstate.player.width, worldstate.player.height)
+                    bullet_rect = pygame.Rect(bullet_obj.x, bullet_obj.y, 5, 10)
+                    if bullet_rect.colliderect(player_rect):
+                        worldstate.gameOver = True
+                        worldstate.objects.remove(bullet_obj)
+
+                bullet = Object(bullet_x, bullet_y, draw_drone_bullet, update_drone_bullet)
+                worldstate.objects.append(bullet)
+
+        # Generate drones at random positions near the boss
+        for _ in range(2):  # Boss summons two drones
+            drone_x = random.randint(worldstate.boss.x, worldstate.boss.x + worldstate.boss.width - 20)
+            drone_y = worldstate.boss.y + worldstate.boss.height + 20
+            drone = Object(drone_x, drone_y, draw_drone, update_drone)
+            drone.timer = 300  # Drone exists for 5 seconds
+            worldstate.objects.append(drone)
+
+# Summary:
+# - Added boss_summon_support_drones: Boss summons drones that shoot down at the player.
+
+
+def deploy_time_warp_portal(worldstate):  # Spawns a portal that affects the flow of time, speeding or slowing gameplay
+    if random.randint(0, 800) < 3:  # Roughly 0.375% chance to spawn a time warp portal per frame
+        portal_x = random.randint(50, SCREEN_WIDTH - 50)
+
+        def draw_time_warp(obj, screen):
+            pygame.draw.ellipse(screen, (255, 20, 147), (obj.x, PLAYER_HEIGHT - 40, 40, 80))
+            pygame.draw.ellipse(screen, (255, 105, 180), (obj.x + 5, PLAYER_HEIGHT - 35, 30, 70))
+
+        def update_time_warp(obj):
+            player_rect = pygame.Rect(worldstate.player.x, PLAYER_HEIGHT, worldstate.player.width, worldstate.player.height)
+            warp_rect = pygame.Rect(obj.x, PLAYER_HEIGHT - 40, 40, 80)
+
+            if player_rect.colliderect(warp_rect):
+                effect = random.choice(["speed", "slow"])
+                if effect == "speed":
+                    worldstate.player.speed *= 1.5
+                    for enemy in worldstate.enemies:
+                        enemy.speed *= 1.5
+                elif effect == "slow":
+                    worldstate.player.speed *= 0.5
+                    for enemy in worldstate.enemies:
+                        enemy.speed *= 0.5
+
+                worldstate.objects.remove(obj)
+
+            if random.randint(0, 200) == 1:  # 0.5% chance to remove portal each frame
+                worldstate.objects.remove(obj)
+
+        worldstate.objects.append(Object(portal_x, PLAYER_HEIGHT - 30, draw_time_warp, update_time_warp))
+
+# Summary:
+# - Added deploy_time_warp_portal: Spawns a portal that alters time flow, affecting player/enemy speed.

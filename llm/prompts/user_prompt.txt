@@ -1,3 +1,3 @@
 Generate a single new function that implements a compelling sci-fi feature.
  - Make sure that the summary you provide is half a line. 
- - Dont make any of the following functions, here are the functions that have been added so far:
+ - Dont make any of the following functions, here are the functions that have been added so far, if you would like, you may use one of the functions that have been added, but upgrade / augment it:

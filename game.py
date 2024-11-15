@@ -31,7 +31,7 @@ BAR_X = 20
 BAR_Y = SCREEN_HEIGHT - 5
 
 # Colors for skins
-PLAYER_SKINS = [GREEN, BLUE, ORANGE, TEAL]  # Define more colors as needed
+PLAYER_SKINS = [GREEN, BLUE, ORANGE, TEAL, WHITE]  # Define more colors as needed
 
 # Set up the display
 #screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -75,7 +75,7 @@ class WorldState:
 
 # Define the Player class
 class Player:
-    def __init__(self, color=GREEN):
+    def __init__(self, color=WHITE):
         self.width = 50
         self.height = 50
         self.x = SCREEN_WIDTH // 2 - self.width // 2
@@ -404,6 +404,7 @@ def display_game_over(worldstate):
                 worldstate.gameOver = False
                 display_loading(worldstate)
                 get_new_function(worldstate)
+                display_menu(worldstate)
 
 
 
@@ -468,7 +469,7 @@ def display_menu(worldstate):
                     if selected_option == 0:
                         return  # Start the game
                     elif selected_option == 1:
-                        display_skin_menu(worldstate.screen)  # Open the skin selection menu
+                        display_skin_menu(worldstate)  # Open the skin selection menu
                     elif selected_option == 2:
                         pygame.quit()
                         sys.exit()
@@ -476,22 +477,22 @@ def display_menu(worldstate):
                         reset_functions()
 
 # Function to display the skin selection menu
-def display_skin_menu(surface):
+def display_skin_menu(worldstate):
     global PLAYER_SKINS
     font = pygame.font.Font("contest.ttf", 48)
     selected_skin = 0
 
     while True:
-        surface.fill(BLACK)
+        worldstate.screen.fill(BLACK)
 
         # Render skin options
         for i, color in enumerate(PLAYER_SKINS):
             skin_text = font.render("STARSHIP " + str(i+1), True, color)
             text_rect = skin_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + i * 50))
-            surface.blit(skin_text, text_rect)
+            worldstate.screen.blit(skin_text, text_rect)
             if i == selected_skin:
                 # Highlight selected skin
-                pygame.draw.rect(surface, WHITE, text_rect.inflate(10, 10), 2)
+                pygame.draw.rect(worldstate.screen, WHITE, text_rect.inflate(10, 10), 2)
 
         pygame.display.flip()
 
@@ -508,16 +509,9 @@ def display_skin_menu(surface):
                 elif event.key == pygame.K_RETURN:
                     # Set the chosen color as the player's skin
                     selected_color = PLAYER_SKINS[selected_skin]
-                    set_player_skin(selected_color)
+                    worldstate.player.color = selected_color
                     return  # Return to the main menu
 
-# Function to set the player's skin color
-def set_player_skin(color):
-    global player_skin
-    player_skin = color  # Store the selected skin color globally
-
-# Initialize player skin color
-player_skin = GREEN  # Default color
 
 def display_summary_message(surface, summary_text):
     """Displays the summary of the new level at the bottom of the screen."""
@@ -641,13 +635,11 @@ def display_loading(worldstate):
     pygame.display.flip()
 
 def main():
-    global player_skin
     # Initialize level, dynamic functions, and level summary
     worldstate = WorldState()
 
     # Display the menu before starting the game
     display_menu(worldstate)
-    worldstate.player.color = player_skin
 
     while worldstate.running:
         worldstate.screen.fill(BLACK)
@@ -661,6 +653,8 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 worldstate.running = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                display_game_over(worldstate)
 
         # Spawn the boss if it's a boss level
         if worldstate.level % worldstate.boss_frequency == 0 and worldstate.boss is None:
